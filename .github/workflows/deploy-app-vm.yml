@@ -52,7 +52,7 @@ jobs:
             fi
 
             echo "Writing/updating .env from secrets..."
-            printf 'LOKI_PUSH_URL=%s\nPROMETHEUS_REMOTE_WRITE_URL=%s\n' \
+            printf 'LOKI_PUSH_URL=%s\nPROMETHEUS_REMOTE_WRITE_URL=%s\nVM_HOSTNAME=apps-vm\n' \
               '${{ secrets.LOKI_PUSH_URL }}' \
               '${{ secrets.PROMETHEUS_REMOTE_WRITE_URL }}' \
               > "${DEPLOY_DIR}/infrastructure/app-vm/.env"

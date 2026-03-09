@@ -57,7 +57,7 @@ jobs:
             fi
 
             echo "Writing/updating .env from secrets..."
-            printf 'GRAFANA_ADMIN_PASSWORD=%s\nOBSERVABILITY_DOMAIN=%s\n' \
+            printf 'GRAFANA_ADMIN_PASSWORD=%s\nOBSERVABILITY_DOMAIN=%s\nVM_HOSTNAME=management-vm\nLOKI_PUSH_URL=http://loki:3100/loki/api/v1/push\nPROMETHEUS_REMOTE_WRITE_URL=http://prometheus:9090/api/v1/write\n' \
               '${{ secrets.GRAFANA_ADMIN_PASSWORD }}' \
               '${{ secrets.OBSERVABILITY_DOMAIN }}' \
               > "${DEPLOY_DIR}/infrastructure/management-vm/.env"
