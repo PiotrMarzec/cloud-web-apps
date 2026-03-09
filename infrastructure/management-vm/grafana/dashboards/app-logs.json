@@ -26,6 +26,7 @@
         "label": "Level",
         "multi": true,
         "includeAll": true,
+        "allValue": ".*",
         "current": {}
       },
       {
@@ -45,7 +46,7 @@
       "datasource": { "type": "loki", "uid": "loki" },
       "targets": [
         {
-          "expr": "{app=\"$app\", level=~\"$level\", job=\"docker\"} |= \"$search\"",
+          "expr": "{app=\"$app\", job=\"docker\"} | level=~\"$level\" |= \"$search\"",
           "legendFormat": ""
         }
       ],
