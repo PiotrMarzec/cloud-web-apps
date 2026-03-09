@@ -6,6 +6,7 @@ on:
       - main
     paths:
       - "infrastructure/app-vm/**"
+      - ".github/workflows/deploy-app-vm.yml"
 
 jobs:
   deploy:
