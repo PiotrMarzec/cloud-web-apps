@@ -46,18 +46,6 @@ loki.source.docker "docker" {
 loki.process "add_labels" {
   forward_to = [loki.write.loki_push.receiver]
 
-  // On the management VM, rename app="caddy" to "caddy-mgmt" so it appears
-  // as a separate entry from the app VM's caddy in Grafana dropdowns.
-  stage.match {
-    selector = `{app="caddy"}`
-
-    stage.static_labels {
-      values = {
-        app = "caddy-mgmt",
-      }
-    }
-  }
-
   // Parse JSON log lines from Docker apps / Caddy
   stage.json {
     expressions = {
