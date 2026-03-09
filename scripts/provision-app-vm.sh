@@ -98,9 +98,9 @@ ufw status verbose
 # ---------------------------------------------------------------------------
 # 5. Create deploy directory and set ownership
 # ---------------------------------------------------------------------------
-log "Creating ${DEPLOY_DIR} owned by deploy:deploy..."
+log "Creating ${DEPLOY_DIR} owned by deploy:docker..."
 mkdir -p "${DEPLOY_DIR}"
-chown deploy:deploy "${DEPLOY_DIR}"
+chown deploy:docker "${DEPLOY_DIR}"
 
 # Add deploy user to docker group so it can run docker commands without sudo
 usermod -aG docker deploy
