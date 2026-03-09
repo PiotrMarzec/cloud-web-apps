@@ -47,10 +47,12 @@ loki.process "add_labels" {
   forward_to = [loki.write.loki_push.receiver]
 
   // Merge multi-line log entries (e.g. error object dumps, stack traces).
-  // A new entry starts when a line begins with "{" (JSON log) or a non-space
-  // character that isn't a continuation line.
+  // Continuation lines are: indented lines (spaces/tabs) or bare closing "}"
+  // A new entry is any line that is NOT a continuation, i.e. starts with a
+  // non-whitespace character other than "}" — this covers both JSON logs ("{")
+  // and plain-text error messages ("error: ...", "Error: ...", etc.).
   stage.multiline {
-    firstline     = "^\\{"
+    firstline     = "^[^\\s\\}]"
     max_wait_time = "3s"
     max_lines     = 256
   }
