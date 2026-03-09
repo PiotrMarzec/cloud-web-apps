@@ -76,6 +76,7 @@ services:
   alloy:
     image: grafana/alloy:latest
     container_name: alloy
+    hostname: "${HOSTNAME}"
     restart: unless-stopped
     command:
       - run

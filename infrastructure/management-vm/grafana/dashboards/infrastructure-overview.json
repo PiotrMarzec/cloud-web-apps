@@ -12,7 +12,7 @@
         "name": "host",
         "type": "query",
         "datasource": { "type": "prometheus", "uid": "prometheus" },
-        "query": "label_values(node_uname_info, nodename)",
+        "query": "label_values(node_cpu_seconds_total, host)",
         "label": "Host",
         "multi": true,
         "includeAll": true,
