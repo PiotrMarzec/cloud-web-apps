@@ -17,6 +17,23 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Validate required secrets
+        env:
+          APP_VM_1_IP: ${{ secrets.APP_VM_1_IP }}
+          APP_VM_1_SSH_KEY: ${{ secrets.APP_VM_1_SSH_KEY }}
+          LOKI_PUSH_URL: ${{ secrets.LOKI_PUSH_URL }}
+          PROMETHEUS_REMOTE_WRITE_URL: ${{ secrets.PROMETHEUS_REMOTE_WRITE_URL }}
+        run: |
+          missing=()
+          [[ -z "$APP_VM_1_IP" ]] && missing+=("APP_VM_1_IP")
+          [[ -z "$APP_VM_1_SSH_KEY" ]] && missing+=("APP_VM_1_SSH_KEY")
+          [[ -z "$LOKI_PUSH_URL" ]] && missing+=("LOKI_PUSH_URL")
+          [[ -z "$PROMETHEUS_REMOTE_WRITE_URL" ]] && missing+=("PROMETHEUS_REMOTE_WRITE_URL")
+          if [[ ${#missing[@]} -gt 0 ]]; then
+            echo "Missing required secrets: ${missing[*]}"
+            exit 1
+          fi
+
       - name: Deploy to app VM via SSH
         uses: appleboy/ssh-action@v1
         with:

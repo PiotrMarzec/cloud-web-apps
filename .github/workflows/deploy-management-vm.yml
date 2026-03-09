@@ -17,6 +17,23 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Validate required secrets
+        env:
+          MGMT_VM_IP: ${{ secrets.MGMT_VM_IP }}
+          MGMT_VM_SSH_KEY: ${{ secrets.MGMT_VM_SSH_KEY }}
+          GRAFANA_ADMIN_PASSWORD: ${{ secrets.GRAFANA_ADMIN_PASSWORD }}
+          OBSERVABILITY_DOMAIN: ${{ secrets.OBSERVABILITY_DOMAIN }}
+        run: |
+          missing=()
+          [[ -z "$MGMT_VM_IP" ]] && missing+=("MGMT_VM_IP")
+          [[ -z "$MGMT_VM_SSH_KEY" ]] && missing+=("MGMT_VM_SSH_KEY")
+          [[ -z "$GRAFANA_ADMIN_PASSWORD" ]] && missing+=("GRAFANA_ADMIN_PASSWORD")
+          [[ -z "$OBSERVABILITY_DOMAIN" ]] && missing+=("OBSERVABILITY_DOMAIN")
+          if [[ ${#missing[@]} -gt 0 ]]; then
+            echo "Missing required secrets: ${missing[*]}"
+            exit 1
+          fi
+
       - name: Deploy to management VM via SSH
         uses: appleboy/ssh-action@v1
         with:
