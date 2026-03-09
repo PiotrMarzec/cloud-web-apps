@@ -120,17 +120,17 @@
     {
       "id": 5,
       "type": "timeseries",
-      "title": "Internal Network I/O (enp7s0, bytes/s)",
+      "title": "Internal Network I/O (bytes/s)",
       "gridPos": { "x": 0, "y": 16, "w": 12, "h": 8 },
       "datasource": { "type": "prometheus", "uid": "prometheus" },
       "targets": [
         {
-          "expr": "rate(node_network_receive_bytes_total{device=\"enp7s0\", host=~\"$host\"}[5m])",
-          "legendFormat": "{{ host }} rx"
+          "expr": "rate(node_network_receive_bytes_total{device!~\"lo|eth0|docker.*|br-.*|veth.*\", host=~\"$host\"}[5m])",
+          "legendFormat": "{{ host }} rx {{ device }}"
         },
         {
-          "expr": "rate(node_network_transmit_bytes_total{device=\"enp7s0\", host=~\"$host\"}[5m])",
-          "legendFormat": "{{ host }} tx"
+          "expr": "rate(node_network_transmit_bytes_total{device!~\"lo|eth0|docker.*|br-.*|veth.*\", host=~\"$host\"}[5m])",
+          "legendFormat": "{{ host }} tx {{ device }}"
         }
       ],
       "fieldConfig": {
