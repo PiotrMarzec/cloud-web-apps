@@ -27,12 +27,17 @@ jobs:
             set -euo pipefail
             DEPLOY_DIR=/opt/cloud-web-apps
 
-            echo "Pulling latest changes..."
-            git -C "${DEPLOY_DIR}" pull --ff-only
+            echo "Syncing repository..."
+            if [ -d "${DEPLOY_DIR}/.git" ]; then
+              git -C "${DEPLOY_DIR}" pull --ff-only
+            else
+              git clone https://github.com/${{ github.repository }}.git "${DEPLOY_DIR}"
+            fi
 
             echo "Writing/updating .env from secrets..."
             cat > "${DEPLOY_DIR}/infrastructure/management-vm/.env" <<ENVEOF
             GRAFANA_ADMIN_PASSWORD=${{ secrets.GRAFANA_ADMIN_PASSWORD }}
+            OBSERVABILITY_DOMAIN=${{ secrets.OBSERVABILITY_DOMAIN }}
             ENVEOF
 
             echo "Pulling updated images..."

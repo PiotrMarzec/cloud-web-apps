@@ -8,10 +8,9 @@
 }
 
 # ---------------------------------------------------------------------------
-# Grafana — observability dashboard
-# Replace observability.example.com with the real domain.
+# Grafana — observability dashboard (domain set via OBSERVABILITY_DOMAIN env var)
 # ---------------------------------------------------------------------------
-observability.example.com {
+{env.OBSERVABILITY_DOMAIN} {
 	log {
 		output stdout
 		format json
