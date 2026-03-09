@@ -55,7 +55,7 @@
         "showLabels": true,
         "showCommonLabels": false,
         "wrapLogMessage": true,
-        "prettifyLogMessage": false,
+        "prettifyLogMessage": true,
         "enableLogDetails": true,
         "sortOrder": "Descending"
       }

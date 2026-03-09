@@ -46,6 +46,15 @@ loki.source.docker "docker" {
 loki.process "add_labels" {
   forward_to = [loki.write.loki_push.receiver]
 
+  // Merge multi-line log entries (e.g. error object dumps, stack traces).
+  // A new entry starts when a line begins with "{" (JSON log) or a non-space
+  // character that isn't a continuation line.
+  stage.multiline {
+    firstline     = "^\\{"
+    max_wait_time = "3s"
+    max_lines     = 256
+  }
+
   // Parse JSON log lines from Docker apps / Caddy
   stage.json {
     expressions = {
