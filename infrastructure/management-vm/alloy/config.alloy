@@ -30,8 +30,8 @@ discovery.relabel "docker_logs" {
   // On the management VM, rename "caddy" to "caddy-mgmt" so it appears
   // as a separate entry from the app VM's caddy in Grafana dropdowns.
   rule {
-    source_labels = ["app"]
-    regex         = "caddy"
+    source_labels = ["__meta_docker_container_name"]
+    regex         = "/caddy"
     target_label  = "app"
     replacement   = "caddy-mgmt"
   }
