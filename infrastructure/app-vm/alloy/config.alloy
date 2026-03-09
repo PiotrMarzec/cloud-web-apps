@@ -97,8 +97,8 @@ prometheus.scrape "node_exporter" {
   job_name = "node-exporter"
 
   relabel_configs = [{
-    target_label = "host"
-    replacement  = constants.hostname
+    target_label = "host",
+    replacement  = constants.hostname,
   }]
 }
 
@@ -112,8 +112,8 @@ prometheus.scrape "cadvisor" {
   job_name        = "cadvisor"
 
   relabel_configs = [{
-    target_label = "host"
-    replacement  = constants.hostname
+    target_label = "host",
+    replacement  = constants.hostname,
   }]
 }
 

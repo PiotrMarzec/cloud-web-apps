@@ -23,14 +23,12 @@ jobs:
           MGMT_VM_SSH_KEY: ${{ secrets.MGMT_VM_SSH_KEY }}
           GRAFANA_ADMIN_PASSWORD: ${{ secrets.GRAFANA_ADMIN_PASSWORD }}
           OBSERVABILITY_DOMAIN: ${{ secrets.OBSERVABILITY_DOMAIN }}
-          APP_VM_1_IP: ${{ secrets.APP_VM_1_IP }}
         run: |
           missing=()
           [[ -z "$MGMT_VM_IP" ]] && missing+=("MGMT_VM_IP")
           [[ -z "$MGMT_VM_SSH_KEY" ]] && missing+=("MGMT_VM_SSH_KEY")
           [[ -z "$GRAFANA_ADMIN_PASSWORD" ]] && missing+=("GRAFANA_ADMIN_PASSWORD")
           [[ -z "$OBSERVABILITY_DOMAIN" ]] && missing+=("OBSERVABILITY_DOMAIN")
-          [[ -z "$APP_VM_1_IP" ]] && missing+=("APP_VM_1_IP")
           if [[ ${#missing[@]} -gt 0 ]]; then
             echo "Missing required secrets: ${missing[*]}"
             exit 1
@@ -71,14 +69,6 @@ jobs:
               > "${DEPLOY_DIR}/infrastructure/management-vm/Caddyfile.rendered"
             cp "${DEPLOY_DIR}/infrastructure/management-vm/Caddyfile.rendered" \
                "${DEPLOY_DIR}/infrastructure/management-vm/Caddyfile"
-
-            echo "Generating prometheus.yml with actual app VM IP..."
-            APP_VM_1_IP=${{ secrets.APP_VM_1_IP }} \
-              envsubst '${APP_VM_1_IP}' \
-              < "${DEPLOY_DIR}/infrastructure/management-vm/prometheus/prometheus.yml" \
-              > "${DEPLOY_DIR}/infrastructure/management-vm/prometheus/prometheus.rendered.yml"
-            cp "${DEPLOY_DIR}/infrastructure/management-vm/prometheus/prometheus.rendered.yml" \
-               "${DEPLOY_DIR}/infrastructure/management-vm/prometheus/prometheus.yml"
 
             echo "Pulling updated images..."
             docker compose -f "${DEPLOY_DIR}/infrastructure/management-vm/docker-compose.yml" pull

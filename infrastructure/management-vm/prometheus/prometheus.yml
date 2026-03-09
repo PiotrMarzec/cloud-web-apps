@@ -25,31 +25,8 @@ scrape_configs:
           - localhost:9090
 
   # ---------------------------------------------------------------------------
-  # App VM — Node Exporter (VM-level metrics)
-  # Add one entry per app VM defined in infrastructure/vms.yaml
-  # ---------------------------------------------------------------------------
-  - job_name: node-exporter
-    static_configs:
-      - targets:
-          - "${APP_VM_1_IP}:9100"
-        labels:
-          host: app-vm-1
-          env: production
-
-  # ---------------------------------------------------------------------------
-  # App VM — cAdvisor (container-level metrics)
-  # ---------------------------------------------------------------------------
-  - job_name: cadvisor
-    static_configs:
-      - targets:
-          - "${APP_VM_1_IP}:8080"
-        labels:
-          host: app-vm-1
-          env: production
-
-  # ---------------------------------------------------------------------------
-  # Remote write receiver
-  # Grafana Alloy on each app VM pushes metrics here via remote_write.
+  # App VM metrics arrive via Grafana Alloy remote_write.
   # Prometheus accepts these when started with --web.enable-remote-write-receiver.
-  # No scrape config needed — metrics arrive via push.
+  # No scrape config needed here — node-exporter and cAdvisor are scraped by
+  # Alloy on each app VM and pushed via remote_write.
   # ---------------------------------------------------------------------------
