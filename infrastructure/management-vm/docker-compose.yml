@@ -11,6 +11,8 @@ services:
       - "80:80"
       - "443:443"
       - "443:443/udp"   # HTTP/3
+    environment:
+      - OBSERVABILITY_DOMAIN=${OBSERVABILITY_DOMAIN}
     volumes:
       - ./Caddyfile:/etc/caddy/Caddyfile:ro
       - caddy_data:/data
@@ -107,7 +109,7 @@ services:
       - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_ADMIN_PASSWORD}
       - GF_SECURITY_ADMIN_USER=admin
       - GF_USERS_ALLOW_SIGN_UP=false
-      - GF_SERVER_ROOT_URL=https://observability.example.com
+      - GF_SERVER_ROOT_URL=https://${OBSERVABILITY_DOMAIN}
       - GF_ALERTING_ENABLED=true
       - GF_UNIFIED_ALERTING_ENABLED=true
     volumes:
