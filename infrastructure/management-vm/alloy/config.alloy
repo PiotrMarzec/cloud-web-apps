@@ -51,13 +51,20 @@ loki.process "add_labels" {
     expressions = {
       level  = "level",
       msg    = "message",
+      // Caddy access log fields
+      status = "status",
+      method = "request.method",
+      proto  = "request.proto",
     }
   }
 
   // Promote parsed fields to labels
   stage.labels {
     values = {
-      level = "",
+      level  = "",
+      status = "",
+      method = "",
+      proto  = "",
     }
   }
 
