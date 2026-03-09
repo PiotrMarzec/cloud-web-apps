@@ -20,7 +20,7 @@ jobs:
         uses: appleboy/ssh-action@v1
         with:
           host: ${{ secrets.MGMT_VM_IP }}
-          username: ubuntu
+          username: deploy
           key: ${{ secrets.MGMT_VM_SSH_KEY }}
           script: |
             set -euo pipefail
