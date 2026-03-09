@@ -22,3 +22,8 @@ This document describes requirements for a cloud setup dedicated to hosting web 
  * create dashboards for metrics
  * create alerts
 * the managament vm should expose the obesrvability stack so it's accesible over the internet on a predefined domain name
+* the setup should also consider security aspects:
+ * how to monitor the source code of web apps to guard agains new security threats
+ * how to audit the setup of the vms and install security updates
+ * how to monitor the logs aginst threats and attacks
+ * in the future the web apps will use a waf from cloudflare
