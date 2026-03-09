@@ -100,17 +100,37 @@
     {
       "id": 4,
       "type": "timeseries",
-      "title": "Network I/O (bytes/s)",
+      "title": "External Network I/O (eth0, bytes/s)",
       "gridPos": { "x": 12, "y": 8, "w": 12, "h": 8 },
       "datasource": { "type": "prometheus", "uid": "prometheus" },
       "targets": [
         {
-          "expr": "rate(node_network_receive_bytes_total{device!~\"lo\", host=~\"$host\"}[5m])",
-          "legendFormat": "{{ host }} rx {{ device }}"
+          "expr": "rate(node_network_receive_bytes_total{device=\"eth0\", host=~\"$host\"}[5m])",
+          "legendFormat": "{{ host }} rx"
         },
         {
-          "expr": "rate(node_network_transmit_bytes_total{device!~\"lo\", host=~\"$host\"}[5m])",
-          "legendFormat": "{{ host }} tx {{ device }}"
+          "expr": "rate(node_network_transmit_bytes_total{device=\"eth0\", host=~\"$host\"}[5m])",
+          "legendFormat": "{{ host }} tx"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": { "unit": "Bps" }
+      }
+    },
+    {
+      "id": 5,
+      "type": "timeseries",
+      "title": "Internal Network I/O (enp7s0, bytes/s)",
+      "gridPos": { "x": 0, "y": 16, "w": 12, "h": 8 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "targets": [
+        {
+          "expr": "rate(node_network_receive_bytes_total{device=\"enp7s0\", host=~\"$host\"}[5m])",
+          "legendFormat": "{{ host }} rx"
+        },
+        {
+          "expr": "rate(node_network_transmit_bytes_total{device=\"enp7s0\", host=~\"$host\"}[5m])",
+          "legendFormat": "{{ host }} tx"
         }
       ],
       "fieldConfig": {
