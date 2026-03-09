@@ -50,6 +50,7 @@ jobs:
 
             echo "Syncing repository..."
             if [ -d "${DEPLOY_DIR}/.git" ]; then
+              git -C "${DEPLOY_DIR}" checkout -- .
               git -C "${DEPLOY_DIR}" pull --ff-only
             else
               git clone https://github.com/${{ github.repository }}.git "${DEPLOY_DIR}"
@@ -60,6 +61,14 @@ jobs:
             GRAFANA_ADMIN_PASSWORD=${{ secrets.GRAFANA_ADMIN_PASSWORD }}
             OBSERVABILITY_DOMAIN=${{ secrets.OBSERVABILITY_DOMAIN }}
             ENVEOF
+
+            echo "Generating Caddyfile with actual domain..."
+            OBSERVABILITY_DOMAIN=${{ secrets.OBSERVABILITY_DOMAIN }} \
+              envsubst '${OBSERVABILITY_DOMAIN}' \
+              < "${DEPLOY_DIR}/infrastructure/management-vm/Caddyfile" \
+              > "${DEPLOY_DIR}/infrastructure/management-vm/Caddyfile.rendered"
+            cp "${DEPLOY_DIR}/infrastructure/management-vm/Caddyfile.rendered" \
+               "${DEPLOY_DIR}/infrastructure/management-vm/Caddyfile"
 
             echo "Pulling updated images..."
             docker compose -f "${DEPLOY_DIR}/infrastructure/management-vm/docker-compose.yml" pull

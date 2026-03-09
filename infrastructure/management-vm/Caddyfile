@@ -10,7 +10,7 @@
 # ---------------------------------------------------------------------------
 # Grafana — observability dashboard (domain set via OBSERVABILITY_DOMAIN env var)
 # ---------------------------------------------------------------------------
-{env.OBSERVABILITY_DOMAIN} {
+${OBSERVABILITY_DOMAIN} {
 	log {
 		output stdout
 		format json
