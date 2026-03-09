@@ -1,0 +1,49 @@
+name: Deploy — App VM
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "infrastructure/app-vm/**"
+
+jobs:
+  deploy:
+    name: Deploy infra stack to app VM
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Deploy to app VM via SSH
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.APP_VM_1_IP }}
+          username: ubuntu
+          key: ${{ secrets.APP_VM_1_SSH_KEY }}
+          script: |
+            set -euo pipefail
+            DEPLOY_DIR=/opt/cloud-web-apps
+
+            echo "Pulling latest changes..."
+            git -C "${DEPLOY_DIR}" pull --ff-only
+
+            echo "Writing/updating .env from secrets..."
+            cat > "${DEPLOY_DIR}/infrastructure/app-vm/.env" <<ENVEOF
+            LOKI_PUSH_URL=${{ secrets.LOKI_PUSH_URL }}
+            PROMETHEUS_REMOTE_WRITE_URL=${{ secrets.PROMETHEUS_REMOTE_WRITE_URL }}
+            ENVEOF
+
+            echo "Pulling updated images..."
+            docker compose -f "${DEPLOY_DIR}/infrastructure/app-vm/docker-compose.yml" pull
+
+            echo "Restarting services..."
+            docker compose -f "${DEPLOY_DIR}/infrastructure/app-vm/docker-compose.yml" up -d
+
+            echo "Reloading Caddy config..."
+            docker compose -f "${DEPLOY_DIR}/infrastructure/app-vm/docker-compose.yml" \
+              exec -T caddy caddy reload --config /etc/caddy/Caddyfile || true
+
+            echo "Stack status:"
+            docker compose -f "${DEPLOY_DIR}/infrastructure/app-vm/docker-compose.yml" ps

@@ -1,0 +1,55 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+  external_labels:
+    env: production
+
+# Alertmanager configuration
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets:
+            - alertmanager:9093
+
+# Load alerting rules
+rule_files:
+  - /etc/prometheus/rules/*.yml
+
+scrape_configs:
+  # ---------------------------------------------------------------------------
+  # Prometheus self-scrape
+  # ---------------------------------------------------------------------------
+  - job_name: prometheus
+    static_configs:
+      - targets:
+          - localhost:9090
+
+  # ---------------------------------------------------------------------------
+  # App VM — Node Exporter (VM-level metrics)
+  # Add one entry per app VM defined in infrastructure/vms.yaml
+  # ---------------------------------------------------------------------------
+  - job_name: node-exporter
+    static_configs:
+      - targets:
+          - "${APP_VM_1_IP}:9100"
+        labels:
+          host: app-vm-1
+          env: production
+
+  # ---------------------------------------------------------------------------
+  # App VM — cAdvisor (container-level metrics)
+  # ---------------------------------------------------------------------------
+  - job_name: cadvisor
+    static_configs:
+      - targets:
+          - "${APP_VM_1_IP}:8080"
+        labels:
+          host: app-vm-1
+          env: production
+
+  # ---------------------------------------------------------------------------
+  # Remote write receiver
+  # Grafana Alloy on each app VM pushes metrics here via remote_write.
+  # Prometheus accepts these when started with --web.enable-remote-write-receiver.
+  # No scrape config needed — metrics arrive via push.
+  # ---------------------------------------------------------------------------

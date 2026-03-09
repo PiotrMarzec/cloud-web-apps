@@ -1,0 +1,79 @@
+{
+  "uid": "app-logs",
+  "title": "Application Logs Explorer",
+  "tags": ["logs", "loki"],
+  "timezone": "browser",
+  "schemaVersion": 38,
+  "refresh": "30s",
+  "time": { "from": "now-1h", "to": "now" },
+  "templating": {
+    "list": [
+      {
+        "name": "app",
+        "type": "query",
+        "datasource": { "type": "loki", "uid": "loki" },
+        "query": "label_values(app)",
+        "label": "App",
+        "multi": false,
+        "includeAll": false,
+        "current": {}
+      },
+      {
+        "name": "level",
+        "type": "query",
+        "datasource": { "type": "loki", "uid": "loki" },
+        "query": "label_values(level)",
+        "label": "Level",
+        "multi": true,
+        "includeAll": true,
+        "current": {}
+      },
+      {
+        "name": "search",
+        "type": "textbox",
+        "label": "Search",
+        "current": { "value": "" }
+      }
+    ]
+  },
+  "panels": [
+    {
+      "id": 1,
+      "type": "logs",
+      "title": "Log Stream — {{ app }}",
+      "gridPos": { "x": 0, "y": 0, "w": 24, "h": 20 },
+      "datasource": { "type": "loki", "uid": "loki" },
+      "targets": [
+        {
+          "expr": "{app=\"$app\", level=~\"$level\", job=\"docker\"} |= \"$search\"",
+          "legendFormat": ""
+        }
+      ],
+      "options": {
+        "showTime": true,
+        "showLabels": true,
+        "showCommonLabels": false,
+        "wrapLogMessage": true,
+        "prettifyLogMessage": false,
+        "enableLogDetails": true,
+        "sortOrder": "Descending"
+      }
+    },
+    {
+      "id": 2,
+      "type": "timeseries",
+      "title": "Log Volume by Level",
+      "gridPos": { "x": 0, "y": 20, "w": 24, "h": 8 },
+      "datasource": { "type": "loki", "uid": "loki" },
+      "targets": [
+        {
+          "expr": "sum by (level) (rate({app=\"$app\", job=\"docker\"}[1m]))",
+          "legendFormat": "{{ level }}"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": { "unit": "short" }
+      }
+    }
+  ]
+}

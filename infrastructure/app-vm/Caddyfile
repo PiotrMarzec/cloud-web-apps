@@ -1,0 +1,31 @@
+# Global options
+{
+	# Structured JSON access logs picked up by Grafana Alloy
+	log {
+		output stdout
+		format json
+		level INFO
+	}
+}
+
+# ---------------------------------------------------------------------------
+# Template: add one block per hosted app.
+# Replace <app-name> and <domain> with real values.
+# The upstream address must match the service name in docker-compose.yml.
+# ---------------------------------------------------------------------------
+
+# app1.example.com {
+# 	log {
+# 		output stdout
+# 		format json
+# 	}
+# 	reverse_proxy app1:8080
+# }
+
+# app2.example.com {
+# 	log {
+# 		output stdout
+# 		format json
+# 	}
+# 	reverse_proxy app2:3000
+# }

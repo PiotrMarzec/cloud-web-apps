@@ -1,0 +1,83 @@
+groups:
+  # ---------------------------------------------------------------------------
+  # Infrastructure alerts
+  # ---------------------------------------------------------------------------
+  - name: infrastructure
+    rules:
+
+      - alert: HighCpuUsage
+        expr: |
+          100 - (avg by (host) (rate(node_cpu_seconds_total{mode="idle"}[5m])) * 100) > 85
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High CPU usage on {{ $labels.host }}"
+          description: "CPU usage has been above 85% for 5 minutes on {{ $labels.host }}."
+
+      - alert: HighMemoryUsage
+        expr: |
+          (1 - (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes)) * 100 > 90
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High memory usage on {{ $labels.host }}"
+          description: "Memory usage is above 90% on {{ $labels.host }}."
+
+      - alert: DiskSpaceLow
+        expr: |
+          (1 - (node_filesystem_avail_bytes{mountpoint="/"} / node_filesystem_size_bytes{mountpoint="/"})) * 100 > 85
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Low disk space on {{ $labels.host }}"
+          description: "Disk usage is above 85% on {{ $labels.host }} (mountpoint: {{ $labels.mountpoint }})."
+
+      - alert: InstanceDown
+        expr: up == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Instance {{ $labels.instance }} is down"
+          description: "{{ $labels.job }} scrape target {{ $labels.instance }} has been down for more than 1 minute."
+
+  # ---------------------------------------------------------------------------
+  # Container alerts
+  # ---------------------------------------------------------------------------
+  - name: containers
+    rules:
+
+      - alert: ContainerRestarting
+        expr: |
+          rate(container_last_seen{name!=""}[5m]) > 0
+          and
+          increase(container_start_time_seconds{name!=""}[10m]) > 2
+        for: 0m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Container {{ $labels.name }} is restarting"
+          description: "Container {{ $labels.name }} on {{ $labels.host }} has restarted more than twice in the last 10 minutes."
+
+      - alert: ContainerHighCpu
+        expr: |
+          (rate(container_cpu_usage_seconds_total{name!=""}[5m]) * 100) > 80
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Container {{ $labels.name }} high CPU"
+          description: "Container {{ $labels.name }} is using >80% CPU for 5 minutes."
+
+      - alert: ContainerHighMemory
+        expr: |
+          (container_memory_usage_bytes{name!=""} / container_spec_memory_limit_bytes{name!=""} * 100) > 90
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Container {{ $labels.name }} high memory"
+          description: "Container {{ $labels.name }} is using >90% of its memory limit."

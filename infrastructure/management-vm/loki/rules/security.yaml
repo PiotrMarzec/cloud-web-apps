@@ -1,0 +1,73 @@
+groups:
+  - name: security
+    rules:
+
+      # High 4xx rate — >50 req/min returning 401/403 from a single IP
+      - alert: High4xxRate
+        expr: |
+          sum by (client_ip, app) (
+            rate({job="docker"} | json | status =~ "40[13]" [1m])
+          ) * 60 > 50
+        for: 1m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High 4xx rate from {{ $labels.client_ip }} on {{ $labels.app }}"
+          description: "IP {{ $labels.client_ip }} generated >50 401/403 responses per minute on app {{ $labels.app }}."
+
+      # Brute-force attempt — >20 failed auth events in 1 min
+      - alert: BruteForceAttempt
+        expr: |
+          sum by (client_ip, app) (
+            rate({job="docker"} | json | msg =~ "(?i)(authentication failure|invalid password|failed login|unauthorized)" [1m])
+          ) * 60 > 20
+        for: 0m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Brute-force attempt from {{ $labels.client_ip }} on {{ $labels.app }}"
+          description: "More than 20 failed authentication events per minute from {{ $labels.client_ip }}."
+
+      # Port scan / unexpected paths — high volume of 404s from one IP
+      - alert: PossiblePortScan
+        expr: |
+          sum by (client_ip) (
+            rate({job="docker"} | json | status = "404" [1m])
+          ) * 60 > 100
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Possible port scan from {{ $labels.client_ip }}"
+          description: "High volume (>100/min) of 404 responses to {{ $labels.client_ip }}."
+
+      # SSH login from new/unexpected IP
+      - alert: SshLoginNewIp
+        expr: |
+          count_over_time({job="docker"} | json | msg =~ "(?i)accepted (password|publickey) for" [5m]) > 0
+        for: 0m
+        labels:
+          severity: info
+        annotations:
+          summary: "SSH login detected"
+          description: "An SSH login was recorded in the last 5 minutes. Review source IP."
+
+  - name: reliability
+    rules:
+
+      # Spike in 5xx errors — error rate >5% over 5 min window
+      - alert: High5xxRate
+        expr: |
+          sum by (app) (
+            rate({job="docker"} | json | status =~ "5.." [5m])
+          )
+          /
+          sum by (app) (
+            rate({job="docker"} | json [5m])
+          ) > 0.05
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High 5xx error rate on {{ $labels.app }}"
+          description: "5xx error rate exceeds 5% over a 5-minute window on {{ $labels.app }}."

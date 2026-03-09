@@ -1,0 +1,131 @@
+services:
+
+  # ---------------------------------------------------------------------------
+  # Caddy — reverse proxy with automatic HTTPS
+  # ---------------------------------------------------------------------------
+  caddy:
+    image: caddy:2-alpine
+    container_name: caddy
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"   # HTTP/3
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    networks:
+      - proxy
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  # ---------------------------------------------------------------------------
+  # Node Exporter — VM-level metrics (CPU, RAM, disk, network)
+  # ---------------------------------------------------------------------------
+  node-exporter:
+    image: prom/node-exporter:latest
+    container_name: node-exporter
+    restart: unless-stopped
+    pid: host
+    command:
+      - "--path.rootfs=/host"
+    volumes:
+      - /:/host:ro,rslave
+    networks:
+      - monitoring
+    logging:
+      driver: json-file
+      options:
+        max-size: "5m"
+        max-file: "2"
+
+  # ---------------------------------------------------------------------------
+  # cAdvisor — container-level metrics
+  # ---------------------------------------------------------------------------
+  cadvisor:
+    image: gcr.io/cadvisor/cadvisor:latest
+    container_name: cadvisor
+    restart: unless-stopped
+    privileged: true
+    devices:
+      - /dev/kmsg
+    volumes:
+      - /:/rootfs:ro
+      - /var/run:/var/run:ro
+      - /sys:/sys:ro
+      - /var/lib/docker/:/var/lib/docker:ro
+      - /dev/disk/:/dev/disk:ro
+    networks:
+      - monitoring
+    logging:
+      driver: json-file
+      options:
+        max-size: "5m"
+        max-file: "2"
+
+  # ---------------------------------------------------------------------------
+  # Grafana Alloy — telemetry collector
+  # Reads Docker logs → labels → pushes to Loki on management VM
+  # Remote-writes metrics to Prometheus on management VM
+  # ---------------------------------------------------------------------------
+  alloy:
+    image: grafana/alloy:latest
+    container_name: alloy
+    restart: unless-stopped
+    command:
+      - run
+      - /etc/alloy/config.alloy
+      - --storage.path=/var/lib/alloy/data
+    volumes:
+      - ./alloy/config.alloy:/etc/alloy/config.alloy:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - /var/lib/docker/containers:/var/lib/docker/containers:ro
+      - alloy_data:/var/lib/alloy/data
+    environment:
+      - LOKI_PUSH_URL=${LOKI_PUSH_URL}
+      - PROMETHEUS_REMOTE_WRITE_URL=${PROMETHEUS_REMOTE_WRITE_URL}
+    networks:
+      - monitoring
+    depends_on:
+      - node-exporter
+      - cadvisor
+    logging:
+      driver: json-file
+      options:
+        max-size: "5m"
+        max-file: "2"
+
+# ---------------------------------------------------------------------------
+# Web app containers — add one service block per app deployed on this VM.
+# Pull images from GHCR; storage paths injected via environment variables.
+# ---------------------------------------------------------------------------
+# Example:
+#
+#   app1:
+#     image: ghcr.io/<org>/app1:latest
+#     container_name: app1
+#     restart: unless-stopped
+#     environment:
+#       - DATABASE_URL=postgresql://...
+#     volumes:
+#       - ${APP_APP1_STORAGE_PATH}:/data
+#     networks:
+#       - proxy
+#       - monitoring
+#
+# ---------------------------------------------------------------------------
+
+networks:
+  proxy:
+    name: proxy
+  monitoring:
+    name: monitoring
+
+volumes:
+  caddy_data:
+  caddy_config:
+  alloy_data:

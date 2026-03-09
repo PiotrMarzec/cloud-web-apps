@@ -1,0 +1,79 @@
+{
+  "uid": "security",
+  "title": "Security",
+  "tags": ["security"],
+  "timezone": "browser",
+  "schemaVersion": 38,
+  "refresh": "1m",
+  "time": { "from": "now-6h", "to": "now" },
+  "panels": [
+    {
+      "id": 1,
+      "type": "timeseries",
+      "title": "Auth Failures per Minute",
+      "gridPos": { "x": 0, "y": 0, "w": 12, "h": 8 },
+      "datasource": { "type": "loki", "uid": "loki" },
+      "targets": [
+        {
+          "expr": "sum by (app) (rate({job=\"docker\"} | json | msg =~ \"(?i)(authentication failure|invalid password|failed login|unauthorized)\" [1m]))",
+          "legendFormat": "{{ app }}"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": { "unit": "short" }
+      }
+    },
+    {
+      "id": 2,
+      "type": "timeseries",
+      "title": "4xx / 5xx Rate by App",
+      "gridPos": { "x": 12, "y": 0, "w": 12, "h": 8 },
+      "datasource": { "type": "loki", "uid": "loki" },
+      "targets": [
+        {
+          "expr": "sum by (app) (rate({job=\"docker\"} | json | status =~ \"4..\" [1m]))",
+          "legendFormat": "{{ app }} 4xx"
+        },
+        {
+          "expr": "sum by (app) (rate({job=\"docker\"} | json | status =~ \"5..\" [1m]))",
+          "legendFormat": "{{ app }} 5xx"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": { "unit": "reqps" }
+      }
+    },
+    {
+      "id": 3,
+      "type": "table",
+      "title": "Top Offending IPs (4xx/5xx, last 1h)",
+      "gridPos": { "x": 0, "y": 8, "w": 12, "h": 8 },
+      "datasource": { "type": "loki", "uid": "loki" },
+      "targets": [
+        {
+          "expr": "topk(10, sum by (client_ip) (count_over_time({job=\"docker\"} | json | status =~ \"4..|5..\" [1h])))",
+          "legendFormat": "{{ client_ip }}"
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "type": "logs",
+      "title": "Recent Auth Failure Events",
+      "gridPos": { "x": 12, "y": 8, "w": 12, "h": 8 },
+      "datasource": { "type": "loki", "uid": "loki" },
+      "targets": [
+        {
+          "expr": "{job=\"docker\"} | json | msg =~ \"(?i)(authentication failure|invalid password|failed login|unauthorized)\"",
+          "legendFormat": ""
+        }
+      ],
+      "options": {
+        "showTime": true,
+        "showLabels": true,
+        "enableLogDetails": true,
+        "sortOrder": "Descending"
+      }
+    }
+  ]
+}

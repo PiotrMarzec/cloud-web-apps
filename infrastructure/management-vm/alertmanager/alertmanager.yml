@@ -1,0 +1,84 @@
+global:
+  resolve_timeout: 5m
+  # SMTP configuration for email alerts (fill in or use Slack/PagerDuty instead)
+  # smtp_smarthost: smtp.example.com:587
+  # smtp_from: alertmanager@example.com
+  # smtp_auth_username: alertmanager@example.com
+  # smtp_auth_password: <secret>
+
+# ---------------------------------------------------------------------------
+# Routing tree
+# ---------------------------------------------------------------------------
+route:
+  group_by: ["alertname", "host", "app"]
+  group_wait: 30s
+  group_interval: 5m
+  repeat_interval: 4h
+  receiver: default
+
+  routes:
+    # Critical alerts — immediate notification
+    - match:
+        severity: critical
+      receiver: critical
+      repeat_interval: 1h
+
+    # Security alerts
+    - match_re:
+        alertname: "(BruteForceAttempt|High4xxRate|PossiblePortScan|SshLoginNewIp)"
+      receiver: security
+      repeat_interval: 2h
+
+    # Info-level — lower priority channel
+    - match:
+        severity: info
+      receiver: info-channel
+      repeat_interval: 24h
+
+# ---------------------------------------------------------------------------
+# Receivers
+# Uncomment / configure the channels you want to use.
+# ---------------------------------------------------------------------------
+receivers:
+  - name: default
+    # Slack example:
+    # slack_configs:
+    #   - api_url: https://hooks.slack.com/services/<TOKEN>
+    #     channel: "#alerts"
+    #     title: "{{ .GroupLabels.alertname }}"
+    #     text: "{{ range .Alerts }}{{ .Annotations.description }}\n{{ end }}"
+
+    # Email example:
+    # email_configs:
+    #   - to: ops@example.com
+    #     subject: "[{{ .Status | toUpper }}] {{ .GroupLabels.alertname }}"
+
+  - name: critical
+    # slack_configs:
+    #   - api_url: https://hooks.slack.com/services/<TOKEN>
+    #     channel: "#alerts-critical"
+    #     title: ":fire: CRITICAL: {{ .GroupLabels.alertname }}"
+    #     text: "{{ range .Alerts }}{{ .Annotations.description }}\n{{ end }}"
+
+    # pagerduty_configs:
+    #   - service_key: <PAGERDUTY_KEY>
+
+  - name: security
+    # slack_configs:
+    #   - api_url: https://hooks.slack.com/services/<TOKEN>
+    #     channel: "#security-alerts"
+    #     title: ":shield: SECURITY: {{ .GroupLabels.alertname }}"
+    #     text: "{{ range .Alerts }}{{ .Annotations.description }}\n{{ end }}"
+
+  - name: info-channel
+    # slack_configs:
+    #   - api_url: https://hooks.slack.com/services/<TOKEN>
+    #     channel: "#alerts-info"
+
+inhibit_rules:
+  # Suppress warning alerts when a critical alert is already firing for the same host
+  - source_match:
+      severity: critical
+    target_match:
+      severity: warning
+    equal: ["host", "app"]

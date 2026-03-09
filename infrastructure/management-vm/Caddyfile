@@ -1,0 +1,21 @@
+# Global options
+{
+	log {
+		output stdout
+		format json
+		level INFO
+	}
+}
+
+# ---------------------------------------------------------------------------
+# Grafana — observability dashboard
+# Replace observability.example.com with the real domain.
+# ---------------------------------------------------------------------------
+observability.example.com {
+	log {
+		output stdout
+		format json
+	}
+
+	reverse_proxy grafana:3000
+}

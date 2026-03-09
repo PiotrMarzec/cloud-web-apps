@@ -1,0 +1,93 @@
+{
+  "uid": "caddy-traffic",
+  "title": "Caddy Traffic",
+  "tags": ["caddy", "http"],
+  "timezone": "browser",
+  "schemaVersion": 38,
+  "refresh": "30s",
+  "time": { "from": "now-1h", "to": "now" },
+  "templating": {
+    "list": [
+      {
+        "name": "app",
+        "type": "query",
+        "datasource": { "type": "loki", "uid": "loki" },
+        "query": "label_values(app)",
+        "label": "App",
+        "multi": true,
+        "includeAll": true,
+        "current": {}
+      }
+    ]
+  },
+  "panels": [
+    {
+      "id": 1,
+      "type": "timeseries",
+      "title": "Requests per Second",
+      "gridPos": { "x": 0, "y": 0, "w": 12, "h": 8 },
+      "datasource": { "type": "loki", "uid": "loki" },
+      "targets": [
+        {
+          "expr": "sum by (app) (rate({app=~\"$app\", job=\"docker\"} | json | status != \"\" [1m]))",
+          "legendFormat": "{{ app }}"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": { "unit": "reqps" }
+      }
+    },
+    {
+      "id": 2,
+      "type": "timeseries",
+      "title": "5xx Error Rate",
+      "gridPos": { "x": 12, "y": 0, "w": 12, "h": 8 },
+      "datasource": { "type": "loki", "uid": "loki" },
+      "targets": [
+        {
+          "expr": "sum by (app) (rate({app=~\"$app\", job=\"docker\"} | json | status =~ \"5..\" [1m]))",
+          "legendFormat": "{{ app }} 5xx"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": { "unit": "reqps" }
+      }
+    },
+    {
+      "id": 3,
+      "type": "timeseries",
+      "title": "4xx Error Rate",
+      "gridPos": { "x": 0, "y": 8, "w": 12, "h": 8 },
+      "datasource": { "type": "loki", "uid": "loki" },
+      "targets": [
+        {
+          "expr": "sum by (app) (rate({app=~\"$app\", job=\"docker\"} | json | status =~ \"4..\" [1m]))",
+          "legendFormat": "{{ app }} 4xx"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": { "unit": "reqps" }
+      }
+    },
+    {
+      "id": 4,
+      "type": "timeseries",
+      "title": "Response Latency (ms)",
+      "gridPos": { "x": 12, "y": 8, "w": 12, "h": 8 },
+      "datasource": { "type": "loki", "uid": "loki" },
+      "targets": [
+        {
+          "expr": "quantile_over_time(0.95, {app=~\"$app\", job=\"docker\"} | json | unwrap duration [5m]) by (app)",
+          "legendFormat": "p95 {{ app }}"
+        },
+        {
+          "expr": "quantile_over_time(0.50, {app=~\"$app\", job=\"docker\"} | json | unwrap duration [5m]) by (app)",
+          "legendFormat": "p50 {{ app }}"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": { "unit": "ms" }
+      }
+    }
+  ]
+}

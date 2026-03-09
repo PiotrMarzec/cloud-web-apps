@@ -1,0 +1,14 @@
+vms:
+  - name: app-vm-1
+    role: app
+    provider: hetzner          # or aws, gcp, etc.
+    region: eu-central
+    ssh_secret: APP_VM_1_SSH_KEY
+    ip_secret: APP_VM_1_IP
+
+  - name: management-vm
+    role: management
+    provider: hetzner
+    region: eu-central
+    ssh_secret: MGMT_VM_SSH_KEY
+    ip_secret: MGMT_VM_IP

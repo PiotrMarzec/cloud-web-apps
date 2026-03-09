@@ -1,0 +1,73 @@
+name: Security Audit (weekly Lynis)
+
+on:
+  schedule:
+    # Every Sunday at 02:00 UTC
+    - cron: "0 2 * * 0"
+  workflow_dispatch:
+
+jobs:
+  audit-app-vm:
+    name: Lynis audit — app VM
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Run Lynis on app VM
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.APP_VM_1_IP }}
+          username: ubuntu
+          key: ${{ secrets.APP_VM_1_SSH_KEY }}
+          script: |
+            set -euo pipefail
+            sudo apt-get install -y lynis 2>/dev/null || true
+            REPORT=/tmp/lynis-report-app-vm-$(date +%Y%m%d).txt
+            sudo lynis audit system --quiet --report-file "${REPORT}" || true
+            cat "${REPORT}"
+
+            # Extract hardening index and alert if below threshold (65)
+            INDEX=$(grep "^hardening_index=" "${REPORT}" | cut -d= -f2 || echo "0")
+            echo "Lynis hardening index: ${INDEX}"
+            if [ "${INDEX}" -lt 65 ]; then
+              echo "::warning::Lynis hardening index ${INDEX} is below threshold (65) on app-vm-1"
+            fi
+
+      - name: Upload Lynis report (app VM)
+        uses: actions/upload-artifact@v4
+        with:
+          name: lynis-report-app-vm-${{ github.run_id }}
+          path: /tmp/lynis-report-app-vm-*.txt
+          retention-days: 90
+        if: always()
+
+  audit-management-vm:
+    name: Lynis audit — management VM
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Run Lynis on management VM
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.MGMT_VM_IP }}
+          username: ubuntu
+          key: ${{ secrets.MGMT_VM_SSH_KEY }}
+          script: |
+            set -euo pipefail
+            sudo apt-get install -y lynis 2>/dev/null || true
+            REPORT=/tmp/lynis-report-mgmt-vm-$(date +%Y%m%d).txt
+            sudo lynis audit system --quiet --report-file "${REPORT}" || true
+            cat "${REPORT}"
+
+            INDEX=$(grep "^hardening_index=" "${REPORT}" | cut -d= -f2 || echo "0")
+            echo "Lynis hardening index: ${INDEX}"
+            if [ "${INDEX}" -lt 65 ]; then
+              echo "::warning::Lynis hardening index ${INDEX} is below threshold (65) on management-vm"
+            fi
+
+      - name: Upload Lynis report (management VM)
+        uses: actions/upload-artifact@v4
+        with:
+          name: lynis-report-mgmt-vm-${{ github.run_id }}
+          path: /tmp/lynis-report-mgmt-vm-*.txt
+          retention-days: 90
+        if: always()
