@@ -52,10 +52,10 @@ jobs:
             fi
 
             echo "Writing/updating .env from secrets..."
-            cat > "${DEPLOY_DIR}/infrastructure/app-vm/.env" <<ENVEOF
-            LOKI_PUSH_URL=${{ secrets.LOKI_PUSH_URL }}
-            PROMETHEUS_REMOTE_WRITE_URL=${{ secrets.PROMETHEUS_REMOTE_WRITE_URL }}
-            ENVEOF
+            printf 'LOKI_PUSH_URL=%s\nPROMETHEUS_REMOTE_WRITE_URL=%s\n' \
+              '${{ secrets.LOKI_PUSH_URL }}' \
+              '${{ secrets.PROMETHEUS_REMOTE_WRITE_URL }}' \
+              > "${DEPLOY_DIR}/infrastructure/app-vm/.env"
 
             echo "Pulling updated images..."
             docker compose -f "${DEPLOY_DIR}/infrastructure/app-vm/docker-compose.yml" pull
