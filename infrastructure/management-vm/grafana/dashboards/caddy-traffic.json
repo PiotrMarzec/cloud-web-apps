@@ -9,11 +9,22 @@
   "templating": {
     "list": [
       {
+        "name": "instance",
+        "type": "query",
+        "datasource": { "type": "loki", "uid": "loki" },
+        "query": "label_values({app=~\"caddy|caddy-mgmt\", job=\"docker\"}, app)",
+        "label": "Instance",
+        "multi": true,
+        "includeAll": true,
+        "allValue": "caddy|caddy-mgmt",
+        "current": {}
+      },
+      {
         "name": "app",
         "type": "query",
         "datasource": { "type": "loki", "uid": "loki" },
-        "query": "label_values({app=\"caddy\", job=\"docker\"}, logger)",
-        "label": "App",
+        "query": "label_values({app=~\"$instance\", job=\"docker\"}, logger)",
+        "label": "Logger",
         "multi": true,
         "includeAll": true,
         "current": {}
@@ -29,8 +40,8 @@
       "datasource": { "type": "loki", "uid": "loki" },
       "targets": [
         {
-          "expr": "sum by (logger) (rate({app=\"caddy\", job=\"docker\", logger=~\"$app\"} | json | status != \"\" [1m]))",
-          "legendFormat": "{{ logger }}"
+          "expr": "sum by (app, logger) (rate({app=~\"$instance\", job=\"docker\", logger=~\"$app\"} | json | status != \"\" [1m]))",
+          "legendFormat": "{{ app }} / {{ logger }}"
         }
       ],
       "fieldConfig": {
@@ -45,8 +56,8 @@
       "datasource": { "type": "loki", "uid": "loki" },
       "targets": [
         {
-          "expr": "sum by (logger) (rate({app=\"caddy\", job=\"docker\", logger=~\"$app\"} | json | status =~ \"5..\" [1m]))",
-          "legendFormat": "{{ logger }} 5xx"
+          "expr": "sum by (app, logger) (rate({app=~\"$instance\", job=\"docker\", logger=~\"$app\"} | json | status =~ \"5..\" [1m]))",
+          "legendFormat": "{{ app }} / {{ logger }} 5xx"
         }
       ],
       "fieldConfig": {
@@ -61,8 +72,8 @@
       "datasource": { "type": "loki", "uid": "loki" },
       "targets": [
         {
-          "expr": "sum by (logger) (rate({app=\"caddy\", job=\"docker\", logger=~\"$app\"} | json | status =~ \"4..\" [1m]))",
-          "legendFormat": "{{ logger }} 4xx"
+          "expr": "sum by (app, logger) (rate({app=~\"$instance\", job=\"docker\", logger=~\"$app\"} | json | status =~ \"4..\" [1m]))",
+          "legendFormat": "{{ app }} / {{ logger }} 4xx"
         }
       ],
       "fieldConfig": {
@@ -77,12 +88,12 @@
       "datasource": { "type": "loki", "uid": "loki" },
       "targets": [
         {
-          "expr": "quantile_over_time(0.95, {app=\"caddy\", job=\"docker\", logger=~\"$app\"} | json | unwrap duration [5m]) by (logger)",
-          "legendFormat": "p95 {{ logger }}"
+          "expr": "quantile_over_time(0.95, {app=~\"$instance\", job=\"docker\", logger=~\"$app\"} | json | unwrap duration [5m]) by (app, logger)",
+          "legendFormat": "p95 {{ app }} / {{ logger }}"
         },
         {
-          "expr": "quantile_over_time(0.50, {app=\"caddy\", job=\"docker\", logger=~\"$app\"} | json | unwrap duration [5m]) by (logger)",
-          "legendFormat": "p50 {{ logger }}"
+          "expr": "quantile_over_time(0.50, {app=~\"$instance\", job=\"docker\", logger=~\"$app\"} | json | unwrap duration [5m]) by (app, logger)",
+          "legendFormat": "p50 {{ app }} / {{ logger }}"
         }
       ],
       "fieldConfig": {
