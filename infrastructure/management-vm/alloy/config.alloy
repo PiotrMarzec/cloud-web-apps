@@ -1,0 +1,120 @@
+// ---------------------------------------------------------------------------
+// Grafana Alloy configuration — management VM
+//
+// Pipeline:
+//   Docker container logs  →  label enrichment  →  local Loki
+//   Node Exporter metrics  →  remote write       →  local Prometheus
+//   cAdvisor metrics       →  remote write       →  local Prometheus
+// ---------------------------------------------------------------------------
+
+// ---------------------------------------------------------------------------
+// LOG COLLECTION: Docker container logs → Loki
+// ---------------------------------------------------------------------------
+
+// Discover all running Docker containers
+discovery.docker "containers" {
+  host = "unix:///var/run/docker.sock"
+}
+
+// Relabel discovered targets to extract useful labels
+discovery.relabel "docker_logs" {
+  targets = discovery.docker.containers.targets
+
+  // Use container name as the "app" label (strip leading slash)
+  rule {
+    source_labels = ["__meta_docker_container_name"]
+    regex         = "/(.*)"
+    target_label  = "app"
+  }
+
+  // Preserve container image as a label
+  rule {
+    source_labels = ["__meta_docker_container_image_name"]
+    target_label  = "image"
+  }
+}
+
+// Read Docker log files from disk
+loki.source.docker "docker" {
+  host    = "unix:///var/run/docker.sock"
+  targets = discovery.relabel.docker_logs.output
+
+  forward_to = [loki.process.add_labels.receiver]
+}
+
+// Enrich logs with mandatory labels: job, host, env
+loki.process "add_labels" {
+  forward_to = [loki.write.loki_push.receiver]
+
+  // Parse JSON log lines from Docker apps / Caddy
+  stage.json {
+    expressions = {
+      level  = "level",
+      msg    = "message",
+    }
+  }
+
+  // Promote parsed fields to labels
+  stage.labels {
+    values = {
+      level = "",
+    }
+  }
+
+  // Add static labels common to this VM
+  stage.static_labels {
+    values = {
+      job  = "docker",
+      host = constants.hostname,
+      env  = "production",
+    }
+  }
+}
+
+// Push logs to local Loki
+loki.write "loki_push" {
+  endpoint {
+    url = env("LOKI_PUSH_URL")
+  }
+}
+
+// ---------------------------------------------------------------------------
+// METRICS: Node Exporter + cAdvisor → Prometheus remote write
+// ---------------------------------------------------------------------------
+
+// Scrape Node Exporter (VM-level metrics)
+prometheus.scrape "node_exporter" {
+  targets = [
+    {"__address__" = "node-exporter:9100"},
+  ]
+  forward_to      = [prometheus.relabel.add_host.receiver]
+  scrape_interval = "15s"
+  job_name        = "node-exporter"
+}
+
+// Scrape cAdvisor (container-level metrics)
+prometheus.scrape "cadvisor" {
+  targets = [
+    {"__address__" = "cadvisor:8080"},
+  ]
+  forward_to      = [prometheus.relabel.add_host.receiver]
+  scrape_interval = "15s"
+  job_name        = "cadvisor"
+}
+
+// Add host label to all scraped metrics before remote write
+prometheus.relabel "add_host" {
+  forward_to = [prometheus.remote_write.prometheus_push.receiver]
+
+  rule {
+    target_label = "host"
+    replacement  = constants.hostname
+  }
+}
+
+// Remote write to local Prometheus
+prometheus.remote_write "prometheus_push" {
+  endpoint {
+    url = env("PROMETHEUS_REMOTE_WRITE_URL")
+  }
+}

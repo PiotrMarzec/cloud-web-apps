@@ -99,6 +99,85 @@ services:
         max-file: "2"
 
   # ---------------------------------------------------------------------------
+  # Node Exporter — VM-level metrics (CPU, RAM, disk, network)
+  # ---------------------------------------------------------------------------
+  node-exporter:
+    image: prom/node-exporter:latest
+    container_name: node-exporter
+    restart: unless-stopped
+    pid: host
+    command:
+      - "--path.rootfs=/host"
+    volumes:
+      - /:/host:ro,rslave
+    networks:
+      - observability
+    logging:
+      driver: json-file
+      options:
+        max-size: "5m"
+        max-file: "2"
+
+  # ---------------------------------------------------------------------------
+  # cAdvisor — container-level metrics
+  # ---------------------------------------------------------------------------
+  cadvisor:
+    image: gcr.io/cadvisor/cadvisor:latest
+    container_name: cadvisor
+    restart: unless-stopped
+    privileged: true
+    devices:
+      - /dev/kmsg
+    volumes:
+      - /:/rootfs:ro
+      - /var/run:/var/run:ro
+      - /sys:/sys:ro
+      - /var/lib/docker/:/var/lib/docker:ro
+      - /dev/disk/:/dev/disk:ro
+    networks:
+      - observability
+    logging:
+      driver: json-file
+      options:
+        max-size: "5m"
+        max-file: "2"
+
+  # ---------------------------------------------------------------------------
+  # Grafana Alloy — telemetry collector
+  # Scrapes node-exporter + cAdvisor, collects Docker logs, and writes
+  # to local Prometheus and Loki on the same VM.
+  # ---------------------------------------------------------------------------
+  alloy:
+    image: grafana/alloy:latest
+    container_name: alloy
+    hostname: "${HOSTNAME}"
+    restart: unless-stopped
+    command:
+      - run
+      - /etc/alloy/config.alloy
+      - --storage.path=/var/lib/alloy/data
+    volumes:
+      - ./alloy/config.alloy:/etc/alloy/config.alloy:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - /var/lib/docker/containers:/var/lib/docker/containers:ro
+      - alloy_data:/var/lib/alloy/data
+    environment:
+      - LOKI_PUSH_URL=${LOKI_PUSH_URL}
+      - PROMETHEUS_REMOTE_WRITE_URL=${PROMETHEUS_REMOTE_WRITE_URL}
+    networks:
+      - observability
+    depends_on:
+      - node-exporter
+      - cadvisor
+      - loki
+      - prometheus
+    logging:
+      driver: json-file
+      options:
+        max-size: "5m"
+        max-file: "2"
+
+  # ---------------------------------------------------------------------------
   # Grafana — dashboards and alert rules
   # ---------------------------------------------------------------------------
   grafana:
@@ -138,3 +217,4 @@ volumes:
   prometheus_data:
   alertmanager_data:
   grafana_data:
+  alloy_data:

@@ -126,8 +126,12 @@ fi
 ENV_FILE="${DEPLOY_DIR}/infrastructure/management-vm/.env"
 if [ ! -f "${ENV_FILE}" ]; then
   log "Writing .env template — fill in secrets before starting services."
-  cat > "${ENV_FILE}" <<'ENVEOF'
+  cat > "${ENV_FILE}" <<ENVEOF
 GRAFANA_ADMIN_PASSWORD=changeme
+OBSERVABILITY_DOMAIN=<your-observability-domain>
+HOSTNAME=$(hostname)
+LOKI_PUSH_URL=http://loki:3100/loki/api/v1/push
+PROMETHEUS_REMOTE_WRITE_URL=http://prometheus:9090/api/v1/write
 ENVEOF
 fi
 

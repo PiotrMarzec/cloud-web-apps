@@ -121,9 +121,10 @@ fi
 ENV_FILE="${DEPLOY_DIR}/infrastructure/app-vm/.env"
 if [ ! -f "${ENV_FILE}" ]; then
   log "Writing .env template — fill in secrets before starting services."
-  cat > "${ENV_FILE}" <<'ENVEOF'
+  cat > "${ENV_FILE}" <<ENVEOF
 LOKI_PUSH_URL=http://<MGMT_VM_IP>:3100/loki/api/v1/push
 PROMETHEUS_REMOTE_WRITE_URL=http://<MGMT_VM_IP>:9090/api/v1/write
+HOSTNAME=$(hostname)
 ENVEOF
 fi
 
