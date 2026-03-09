@@ -90,16 +90,9 @@ prometheus.scrape "node_exporter" {
   targets = [
     {"__address__" = "node-exporter:9100"},
   ]
-  forward_to     = [prometheus.remote_write.prometheus_push.receiver]
+  forward_to      = [prometheus.relabel.add_host.receiver]
   scrape_interval = "15s"
-
-  // Add labels to all metrics from this scrape
-  job_name = "node-exporter"
-
-  relabel_configs = [{
-    target_label = "host",
-    replacement  = constants.hostname,
-  }]
+  job_name        = "node-exporter"
 }
 
 // Scrape cAdvisor (container-level metrics)
@@ -107,14 +100,19 @@ prometheus.scrape "cadvisor" {
   targets = [
     {"__address__" = "cadvisor:8080"},
   ]
-  forward_to      = [prometheus.remote_write.prometheus_push.receiver]
+  forward_to      = [prometheus.relabel.add_host.receiver]
   scrape_interval = "15s"
   job_name        = "cadvisor"
+}
 
-  relabel_configs = [{
-    target_label = "host",
-    replacement  = constants.hostname,
-  }]
+// Add host label to all scraped metrics before remote write
+prometheus.relabel "add_host" {
+  forward_to = [prometheus.remote_write.prometheus_push.receiver]
+
+  rule {
+    target_label = "host"
+    replacement  = constants.hostname
+  }
 }
 
 // Remote write to Prometheus on management VM

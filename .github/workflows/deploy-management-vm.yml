@@ -76,5 +76,8 @@ jobs:
             echo "Restarting services..."
             docker compose -f "${DEPLOY_DIR}/infrastructure/management-vm/docker-compose.yml" up -d
 
+            echo "Reloading Prometheus config..."
+            curl -s -X POST http://localhost:9090/-/reload || true
+
             echo "Stack status:"
             docker compose -f "${DEPLOY_DIR}/infrastructure/management-vm/docker-compose.yml" ps
