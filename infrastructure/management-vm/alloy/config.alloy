@@ -65,7 +65,7 @@ loki.process "add_labels" {
   stage.static_labels {
     values = {
       job  = "docker",
-      host = constants.hostname,
+      host = env("VM_HOSTNAME"),
       env  = "production",
     }
   }
@@ -108,7 +108,7 @@ prometheus.relabel "add_host" {
 
   rule {
     target_label = "host"
-    replacement  = constants.hostname
+    replacement  = env("VM_HOSTNAME")
   }
 }
 

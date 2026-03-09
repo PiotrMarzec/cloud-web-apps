@@ -124,7 +124,7 @@ if [ ! -f "${ENV_FILE}" ]; then
   cat > "${ENV_FILE}" <<ENVEOF
 LOKI_PUSH_URL=http://<MGMT_VM_IP>:3100/loki/api/v1/push
 PROMETHEUS_REMOTE_WRITE_URL=http://<MGMT_VM_IP>:9090/api/v1/write
-HOSTNAME=$(hostname)
+VM_HOSTNAME=apps-vm
 ENVEOF
 fi
 

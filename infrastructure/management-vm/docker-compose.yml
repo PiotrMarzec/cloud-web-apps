@@ -150,7 +150,6 @@ services:
   alloy:
     image: grafana/alloy:latest
     container_name: alloy
-    hostname: "${HOSTNAME}"
     restart: unless-stopped
     command:
       - run
@@ -164,6 +163,7 @@ services:
     environment:
       - LOKI_PUSH_URL=${LOKI_PUSH_URL}
       - PROMETHEUS_REMOTE_WRITE_URL=${PROMETHEUS_REMOTE_WRITE_URL}
+      - VM_HOSTNAME=${VM_HOSTNAME}
     networks:
       - observability
     depends_on:

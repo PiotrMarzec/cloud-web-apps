@@ -129,7 +129,7 @@ if [ ! -f "${ENV_FILE}" ]; then
   cat > "${ENV_FILE}" <<ENVEOF
 GRAFANA_ADMIN_PASSWORD=changeme
 OBSERVABILITY_DOMAIN=<your-observability-domain>
-HOSTNAME=$(hostname)
+VM_HOSTNAME=management-vm
 LOKI_PUSH_URL=http://loki:3100/loki/api/v1/push
 PROMETHEUS_REMOTE_WRITE_URL=http://prometheus:9090/api/v1/write
 ENVEOF
