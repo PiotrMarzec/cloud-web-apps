@@ -5,7 +5,7 @@
 set -euo pipefail
 
 REPO_URL="${REPO_URL:-https://github.com/<org>/cloud-web-apps.git}"
-DEPLOY_DIR="${DEPLOY_DIR:-/home/deploy/cloud-web-apps}"
+DEPLOY_DIR="${DEPLOY_DIR:-/opt/cloud-web-apps}"
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -96,7 +96,17 @@ log "Firewall status:"
 ufw status verbose
 
 # ---------------------------------------------------------------------------
-# 5. Clone or update the repository
+# 5. Create deploy directory and set ownership
+# ---------------------------------------------------------------------------
+log "Creating ${DEPLOY_DIR} owned by deploy:deploy..."
+mkdir -p "${DEPLOY_DIR}"
+chown deploy:deploy "${DEPLOY_DIR}"
+
+# Add deploy user to docker group so it can run docker commands without sudo
+usermod -aG docker deploy
+
+# ---------------------------------------------------------------------------
+# 6. Clone or update the repository
 # ---------------------------------------------------------------------------
 log "Deploying repository to ${DEPLOY_DIR}..."
 if [ -d "${DEPLOY_DIR}/.git" ]; then
@@ -106,7 +116,7 @@ else
 fi
 
 # ---------------------------------------------------------------------------
-# 6. Write environment file (secrets injected at deploy time by CI)
+# 7. Write environment file (secrets injected at deploy time by CI)
 # ---------------------------------------------------------------------------
 ENV_FILE="${DEPLOY_DIR}/infrastructure/app-vm/.env"
 if [ ! -f "${ENV_FILE}" ]; then
@@ -118,7 +128,7 @@ ENVEOF
 fi
 
 # ---------------------------------------------------------------------------
-# 7. Pull images and start the stack
+# 8. Pull images and start the stack
 # ---------------------------------------------------------------------------
 log "Starting app-vm Docker Compose stack..."
 docker compose -f "${DEPLOY_DIR}/infrastructure/app-vm/docker-compose.yml" pull
