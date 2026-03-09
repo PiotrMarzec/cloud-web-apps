@@ -14,18 +14,12 @@
 # The upstream address must match the service name in docker-compose.yml.
 # ---------------------------------------------------------------------------
 
-# app1.example.com {
-# 	log {
-# 		output stdout
-# 		format json
-# 	}
-# 	reverse_proxy app1:8080
-# }
+# When the app container is down (502) or restarting (503/504),
+# serve the static maintenance page instead of a raw error.
+data-collection.piotrmarzec.info {
+        reverse_proxy dc-app:9666
+}
 
-# app2.example.com {
-# 	log {
-# 		output stdout
-# 		format json
-# 	}
-# 	reverse_proxy app2:3000
-# }
+regie.kapibara.cloud {
+        reverse_proxy regie:3000
+}
