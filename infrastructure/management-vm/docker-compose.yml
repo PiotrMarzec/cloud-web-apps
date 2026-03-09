@@ -106,12 +106,11 @@ services:
     container_name: node-exporter
     restart: unless-stopped
     pid: host
+    network_mode: host
     command:
       - "--path.rootfs=/host"
     volumes:
       - /:/host:ro,rslave
-    networks:
-      - observability
     logging:
       driver: json-file
       options:
@@ -164,6 +163,8 @@ services:
       - LOKI_PUSH_URL=${LOKI_PUSH_URL}
       - PROMETHEUS_REMOTE_WRITE_URL=${PROMETHEUS_REMOTE_WRITE_URL}
       - VM_HOSTNAME=${VM_HOSTNAME}
+    extra_hosts:
+      - "node-exporter:host-gateway"
     networks:
       - observability
     depends_on:
