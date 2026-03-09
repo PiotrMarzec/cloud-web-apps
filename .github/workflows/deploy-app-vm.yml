@@ -25,7 +25,7 @@ jobs:
           key: ${{ secrets.APP_VM_1_SSH_KEY }}
           script: |
             set -euo pipefail
-            DEPLOY_DIR=/opt/cloud-web-apps
+            DEPLOY_DIR="${HOME}/cloud-web-apps"
 
             echo "Syncing repository..."
             if [ -d "${DEPLOY_DIR}/.git" ]; then

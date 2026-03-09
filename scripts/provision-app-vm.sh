@@ -5,7 +5,7 @@
 set -euo pipefail
 
 REPO_URL="${REPO_URL:-https://github.com/<org>/cloud-web-apps.git}"
-DEPLOY_DIR="${DEPLOY_DIR:-/opt/cloud-web-apps}"
+DEPLOY_DIR="${DEPLOY_DIR:-/home/deploy/cloud-web-apps}"
 
 # ---------------------------------------------------------------------------
 # Helpers
