@@ -12,7 +12,7 @@
         "name": "app",
         "type": "query",
         "datasource": { "type": "loki", "uid": "loki" },
-        "query": "label_values(app)",
+        "query": "label_values({app=\"caddy\", job=\"docker\"} | json, logger)",
         "label": "App",
         "multi": true,
         "includeAll": true,
@@ -29,8 +29,8 @@
       "datasource": { "type": "loki", "uid": "loki" },
       "targets": [
         {
-          "expr": "sum by (app) (rate({app=~\"$app\", job=\"docker\"} | json | status != \"\" [1m]))",
-          "legendFormat": "{{ app }}"
+          "expr": "sum by (logger) (rate({app=\"caddy\", job=\"docker\"} | json | logger=~\"$app\" | status != \"\" [1m]))",
+          "legendFormat": "{{ logger }}"
         }
       ],
       "fieldConfig": {
@@ -45,8 +45,8 @@
       "datasource": { "type": "loki", "uid": "loki" },
       "targets": [
         {
-          "expr": "sum by (app) (rate({app=~\"$app\", job=\"docker\"} | json | status =~ \"5..\" [1m]))",
-          "legendFormat": "{{ app }} 5xx"
+          "expr": "sum by (logger) (rate({app=\"caddy\", job=\"docker\"} | json | logger=~\"$app\" | status =~ \"5..\" [1m]))",
+          "legendFormat": "{{ logger }} 5xx"
         }
       ],
       "fieldConfig": {
@@ -61,8 +61,8 @@
       "datasource": { "type": "loki", "uid": "loki" },
       "targets": [
         {
-          "expr": "sum by (app) (rate({app=~\"$app\", job=\"docker\"} | json | status =~ \"4..\" [1m]))",
-          "legendFormat": "{{ app }} 4xx"
+          "expr": "sum by (logger) (rate({app=\"caddy\", job=\"docker\"} | json | logger=~\"$app\" | status =~ \"4..\" [1m]))",
+          "legendFormat": "{{ logger }} 4xx"
         }
       ],
       "fieldConfig": {
@@ -77,12 +77,12 @@
       "datasource": { "type": "loki", "uid": "loki" },
       "targets": [
         {
-          "expr": "quantile_over_time(0.95, {app=~\"$app\", job=\"docker\"} | json | unwrap duration [5m]) by (app)",
-          "legendFormat": "p95 {{ app }}"
+          "expr": "quantile_over_time(0.95, {app=\"caddy\", job=\"docker\"} | json | logger=~\"$app\" | unwrap duration [5m]) by (logger)",
+          "legendFormat": "p95 {{ logger }}"
         },
         {
-          "expr": "quantile_over_time(0.50, {app=~\"$app\", job=\"docker\"} | json | unwrap duration [5m]) by (app)",
-          "legendFormat": "p50 {{ app }}"
+          "expr": "quantile_over_time(0.50, {app=\"caddy\", job=\"docker\"} | json | logger=~\"$app\" | unwrap duration [5m]) by (logger)",
+          "legendFormat": "p50 {{ logger }}"
         }
       ],
       "fieldConfig": {
