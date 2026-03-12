@@ -1,0 +1,458 @@
+{
+  "uid": "caddy-mgmt",
+  "title": "Caddy — Management VM",
+  "tags": ["caddy", "http", "mgmt-vm"],
+  "timezone": "browser",
+  "schemaVersion": 38,
+  "refresh": "30s",
+  "time": { "from": "now-1h", "to": "now" },
+  "templating": { "list": [] },
+  "panels": [
+
+    {
+      "id": 1,
+      "type": "row",
+      "title": "Traffic Overview",
+      "collapsed": false,
+      "gridPos": { "x": 0, "y": 0, "w": 24, "h": 1 },
+      "panels": []
+    },
+
+    {
+      "id": 2,
+      "type": "stat",
+      "title": "Total Requests",
+      "description": "Total HTTP requests to the observability stack in the selected time window",
+      "gridPos": { "x": 0, "y": 1, "w": 6, "h": 4 },
+      "datasource": { "type": "loki", "uid": "loki" },
+      "targets": [
+        {
+          "expr": "sum(count_over_time({app=\"caddy-mgmt\", job=\"docker\", method=~\".+\"} [$__range]))",
+          "legendFormat": "",
+          "queryType": "instant"
+        }
+      ],
+      "options": {
+        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false },
+        "orientation": "auto",
+        "textMode": "auto",
+        "colorMode": "background",
+        "graphMode": "none"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "color": { "mode": "fixed", "fixedColor": "blue" },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [{ "color": "blue", "value": null }]
+          }
+        },
+        "overrides": []
+      }
+    },
+
+    {
+      "id": 3,
+      "type": "stat",
+      "title": "Current Req/s",
+      "description": "Request rate averaged over the last 2 minutes",
+      "gridPos": { "x": 6, "y": 1, "w": 6, "h": 4 },
+      "datasource": { "type": "loki", "uid": "loki" },
+      "targets": [
+        {
+          "expr": "sum(rate({app=\"caddy-mgmt\", job=\"docker\", method=~\".+\"} [2m]))",
+          "legendFormat": "",
+          "queryType": "instant"
+        }
+      ],
+      "options": {
+        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false },
+        "orientation": "auto",
+        "textMode": "auto",
+        "colorMode": "background",
+        "graphMode": "none"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "reqps",
+          "color": { "mode": "fixed", "fixedColor": "green" },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [{ "color": "green", "value": null }]
+          }
+        },
+        "overrides": []
+      }
+    },
+
+    {
+      "id": 4,
+      "type": "stat",
+      "title": "5xx Errors",
+      "description": "Total server errors in the selected time window",
+      "gridPos": { "x": 12, "y": 1, "w": 6, "h": 4 },
+      "datasource": { "type": "loki", "uid": "loki" },
+      "targets": [
+        {
+          "expr": "sum(count_over_time({app=\"caddy-mgmt\", job=\"docker\", status=~\"5..\"} [$__range]))",
+          "legendFormat": "",
+          "queryType": "instant"
+        }
+      ],
+      "options": {
+        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false },
+        "orientation": "auto",
+        "textMode": "auto",
+        "colorMode": "background",
+        "graphMode": "none"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "color": { "mode": "thresholds" },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "yellow", "value": 1 },
+              { "color": "red", "value": 5 }
+            ]
+          }
+        },
+        "overrides": []
+      }
+    },
+
+    {
+      "id": 5,
+      "type": "stat",
+      "title": "p95 Latency",
+      "description": "95th percentile response time — includes Grafana upstream processing",
+      "gridPos": { "x": 18, "y": 1, "w": 6, "h": 4 },
+      "datasource": { "type": "loki", "uid": "loki" },
+      "targets": [
+        {
+          "expr": "quantile_over_time(0.95, {app=\"caddy-mgmt\", job=\"docker\", method=~\".+\"} | json | unwrap duration [$__range])",
+          "legendFormat": "",
+          "queryType": "instant"
+        }
+      ],
+      "options": {
+        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false },
+        "orientation": "auto",
+        "textMode": "auto",
+        "colorMode": "background",
+        "graphMode": "none"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s",
+          "color": { "mode": "thresholds" },
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "yellow", "value": 1 },
+              { "color": "red", "value": 5 }
+            ]
+          }
+        },
+        "overrides": []
+      }
+    },
+
+    {
+      "id": 6,
+      "type": "row",
+      "title": "Request Rate & Bandwidth",
+      "collapsed": false,
+      "gridPos": { "x": 0, "y": 5, "w": 24, "h": 1 },
+      "panels": []
+    },
+
+    {
+      "id": 7,
+      "type": "timeseries",
+      "title": "Requests/sec by Status Class",
+      "description": "Request throughput broken down by HTTP status class",
+      "gridPos": { "x": 0, "y": 6, "w": 12, "h": 8 },
+      "datasource": { "type": "loki", "uid": "loki" },
+      "targets": [
+        {
+          "expr": "sum(rate({app=\"caddy-mgmt\", job=\"docker\", status=~\"2..\"} [1m]))",
+          "legendFormat": "2xx"
+        },
+        {
+          "expr": "sum(rate({app=\"caddy-mgmt\", job=\"docker\", status=~\"3..\"} [1m]))",
+          "legendFormat": "3xx"
+        },
+        {
+          "expr": "sum(rate({app=\"caddy-mgmt\", job=\"docker\", status=~\"4..\"} [1m]))",
+          "legendFormat": "4xx"
+        },
+        {
+          "expr": "sum(rate({app=\"caddy-mgmt\", job=\"docker\", status=~\"5..\"} [1m]))",
+          "legendFormat": "5xx"
+        }
+      ],
+      "options": {
+        "tooltip": { "mode": "multi", "sort": "none" },
+        "legend": { "displayMode": "list", "placement": "bottom", "calcs": [] }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "reqps",
+          "custom": { "lineWidth": 2, "fillOpacity": 10, "spanNulls": true }
+        },
+        "overrides": [
+          {
+            "matcher": { "id": "byName", "options": "2xx" },
+            "properties": [{ "id": "color", "value": { "fixedColor": "green", "mode": "fixed" } }]
+          },
+          {
+            "matcher": { "id": "byName", "options": "3xx" },
+            "properties": [{ "id": "color", "value": { "fixedColor": "blue", "mode": "fixed" } }]
+          },
+          {
+            "matcher": { "id": "byName", "options": "4xx" },
+            "properties": [{ "id": "color", "value": { "fixedColor": "orange", "mode": "fixed" } }]
+          },
+          {
+            "matcher": { "id": "byName", "options": "5xx" },
+            "properties": [{ "id": "color", "value": { "fixedColor": "red", "mode": "fixed" } }]
+          }
+        ]
+      }
+    },
+
+    {
+      "id": 8,
+      "type": "timeseries",
+      "title": "Response Bandwidth",
+      "description": "Response body bytes per second proxied to Grafana clients",
+      "gridPos": { "x": 12, "y": 6, "w": 12, "h": 8 },
+      "datasource": { "type": "loki", "uid": "loki" },
+      "targets": [
+        {
+          "expr": "sum(rate({app=\"caddy-mgmt\", job=\"docker\", method=~\".+\"} | json | unwrap size [1m]))",
+          "legendFormat": "bytes out/s"
+        }
+      ],
+      "options": {
+        "tooltip": { "mode": "multi", "sort": "none" },
+        "legend": { "displayMode": "list", "placement": "bottom", "calcs": [] }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "Bps",
+          "custom": { "lineWidth": 2, "fillOpacity": 10, "spanNulls": true },
+          "color": { "mode": "fixed", "fixedColor": "blue" }
+        },
+        "overrides": []
+      }
+    },
+
+    {
+      "id": 9,
+      "type": "row",
+      "title": "Response Latency",
+      "collapsed": false,
+      "gridPos": { "x": 0, "y": 14, "w": 24, "h": 1 },
+      "panels": []
+    },
+
+    {
+      "id": 10,
+      "type": "timeseries",
+      "title": "Response Latency Percentiles",
+      "description": "p50 / p95 / p99 end-to-end response times (Caddy → Grafana upstream + network). Duration logged in seconds.",
+      "gridPos": { "x": 0, "y": 15, "w": 24, "h": 8 },
+      "datasource": { "type": "loki", "uid": "loki" },
+      "targets": [
+        {
+          "expr": "quantile_over_time(0.99, {app=\"caddy-mgmt\", job=\"docker\", method=~\".+\"} | json | unwrap duration [5m])",
+          "legendFormat": "p99"
+        },
+        {
+          "expr": "quantile_over_time(0.95, {app=\"caddy-mgmt\", job=\"docker\", method=~\".+\"} | json | unwrap duration [5m])",
+          "legendFormat": "p95"
+        },
+        {
+          "expr": "quantile_over_time(0.50, {app=\"caddy-mgmt\", job=\"docker\", method=~\".+\"} | json | unwrap duration [5m])",
+          "legendFormat": "p50"
+        }
+      ],
+      "options": {
+        "tooltip": { "mode": "multi", "sort": "none" },
+        "legend": { "displayMode": "list", "placement": "bottom", "calcs": [] }
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s",
+          "custom": { "lineWidth": 2, "fillOpacity": 5, "spanNulls": true }
+        },
+        "overrides": [
+          {
+            "matcher": { "id": "byName", "options": "p99" },
+            "properties": [{ "id": "color", "value": { "fixedColor": "red", "mode": "fixed" } }]
+          },
+          {
+            "matcher": { "id": "byName", "options": "p95" },
+            "properties": [{ "id": "color", "value": { "fixedColor": "orange", "mode": "fixed" } }]
+          },
+          {
+            "matcher": { "id": "byName", "options": "p50" },
+            "properties": [{ "id": "color", "value": { "fixedColor": "green", "mode": "fixed" } }]
+          }
+        ]
+      }
+    },
+
+    {
+      "id": 11,
+      "type": "row",
+      "title": "Access Patterns",
+      "collapsed": false,
+      "gridPos": { "x": 0, "y": 23, "w": 24, "h": 1 },
+      "panels": []
+    },
+
+    {
+      "id": 12,
+      "type": "table",
+      "title": "Top Client IPs",
+      "description": "Source IPs with the most requests — unexpected IPs may indicate unauthorized access attempts",
+      "gridPos": { "x": 0, "y": 24, "w": 12, "h": 8 },
+      "datasource": { "type": "loki", "uid": "loki" },
+      "targets": [
+        {
+          "expr": "topk(15, sum by (remote_ip) (count_over_time({app=\"caddy-mgmt\", job=\"docker\", method=~\".+\"} | json remote_ip=\"request.remote_ip\" [$__range])))",
+          "legendFormat": "{{remote_ip}}",
+          "queryType": "instant"
+        }
+      ],
+      "options": {
+        "footer": { "show": false, "enablePagination": false },
+        "sortBy": [{ "desc": true, "displayName": "Value #A" }]
+      },
+      "fieldConfig": {
+        "defaults": { "unit": "short" },
+        "overrides": []
+      }
+    },
+
+    {
+      "id": 13,
+      "type": "piechart",
+      "title": "Status Code Distribution",
+      "description": "Response status code mix for the selected time window",
+      "gridPos": { "x": 12, "y": 24, "w": 6, "h": 8 },
+      "datasource": { "type": "loki", "uid": "loki" },
+      "targets": [
+        {
+          "expr": "sum by (status) (count_over_time({app=\"caddy-mgmt\", job=\"docker\", status=~\".+\"} [$__range]))",
+          "legendFormat": "{{status}}",
+          "queryType": "instant"
+        }
+      ],
+      "options": {
+        "pieType": "donut",
+        "displayLabels": ["percent"],
+        "legend": { "displayMode": "list", "placement": "right" },
+        "tooltip": { "mode": "multi" }
+      },
+      "fieldConfig": { "defaults": {}, "overrides": [] }
+    },
+
+    {
+      "id": 14,
+      "type": "piechart",
+      "title": "HTTP Method Distribution",
+      "description": "Request method mix — unexpected methods (e.g. PUT, DELETE) warrant investigation",
+      "gridPos": { "x": 18, "y": 24, "w": 6, "h": 8 },
+      "datasource": { "type": "loki", "uid": "loki" },
+      "targets": [
+        {
+          "expr": "sum by (method) (count_over_time({app=\"caddy-mgmt\", job=\"docker\", method=~\".+\"} [$__range]))",
+          "legendFormat": "{{method}}",
+          "queryType": "instant"
+        }
+      ],
+      "options": {
+        "pieType": "donut",
+        "displayLabels": ["percent"],
+        "legend": { "displayMode": "list", "placement": "right" },
+        "tooltip": { "mode": "multi" }
+      },
+      "fieldConfig": { "defaults": {}, "overrides": [] }
+    },
+
+    {
+      "id": 15,
+      "type": "row",
+      "title": "Access Log Stream",
+      "collapsed": false,
+      "gridPos": { "x": 0, "y": 32, "w": 24, "h": 1 },
+      "panels": []
+    },
+
+    {
+      "id": 16,
+      "type": "logs",
+      "title": "All Access Requests",
+      "description": "Live access log stream for the observability domain. Filter by status label in Explore for specific codes.",
+      "gridPos": { "x": 0, "y": 33, "w": 24, "h": 10 },
+      "datasource": { "type": "loki", "uid": "loki" },
+      "targets": [
+        {
+          "expr": "{app=\"caddy-mgmt\", job=\"docker\", method=~\".+\"} | json",
+          "legendFormat": ""
+        }
+      ],
+      "options": {
+        "dedupStrategy": "none",
+        "showLabels": true,
+        "showTime": true,
+        "sortOrder": "Descending",
+        "wrapLogMessage": false,
+        "enableLogDetails": true
+      },
+      "fieldConfig": { "defaults": {}, "overrides": [] }
+    },
+
+    {
+      "id": 17,
+      "type": "row",
+      "title": "Error Logs",
+      "collapsed": false,
+      "gridPos": { "x": 0, "y": 43, "w": 24, "h": 1 },
+      "panels": []
+    },
+
+    {
+      "id": 18,
+      "type": "logs",
+      "title": "4xx / 5xx Requests",
+      "description": "Client and server errors — 401s from Grafana login failures, 502s when Grafana is restarting",
+      "gridPos": { "x": 0, "y": 44, "w": 24, "h": 8 },
+      "datasource": { "type": "loki", "uid": "loki" },
+      "targets": [
+        {
+          "expr": "{app=\"caddy-mgmt\", job=\"docker\", status=~\"[45]..\"} | json",
+          "legendFormat": ""
+        }
+      ],
+      "options": {
+        "dedupStrategy": "none",
+        "showLabels": true,
+        "showTime": true,
+        "sortOrder": "Descending",
+        "wrapLogMessage": true,
+        "enableLogDetails": true
+      },
+      "fieldConfig": { "defaults": {}, "overrides": [] }
+    }
+
+  ]
+}
