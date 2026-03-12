@@ -231,7 +231,7 @@
       "datasource": { "type": "loki", "uid": "loki" },
       "targets": [
         {
-          "expr": "{app=\"$app\", job=\"docker\"} |= \"$search\" | level=~\"$level\"",
+          "expr": "{app=\"$app\", job=\"docker\"} |= \"$search\" | json | level=~\"$level\"",
           "legendFormat": ""
         }
       ],
