@@ -27,7 +27,7 @@
       "datasource": { "type": "loki", "uid": "loki" },
       "targets": [
         {
-          "expr": "sum(count_over_time({app=\"caddy-mgmt\", job=\"docker\", method=~\".+\"} [$__range]))",
+          "expr": "sum(count_over_time({app=\"caddy-mgmt\", job=\"docker\"} | json | status != \"\" [$__range]))",
           "legendFormat": "",
           "queryType": "instant"
         }
@@ -61,7 +61,7 @@
       "datasource": { "type": "loki", "uid": "loki" },
       "targets": [
         {
-          "expr": "sum(rate({app=\"caddy-mgmt\", job=\"docker\", method=~\".+\"} [2m]))",
+          "expr": "sum(rate({app=\"caddy-mgmt\", job=\"docker\"} | json | status != \"\" [2m]))",
           "legendFormat": "",
           "queryType": "instant"
         }
@@ -95,7 +95,7 @@
       "datasource": { "type": "loki", "uid": "loki" },
       "targets": [
         {
-          "expr": "sum(count_over_time({app=\"caddy-mgmt\", job=\"docker\", status=~\"5..\"} [$__range]))",
+          "expr": "sum(count_over_time({app=\"caddy-mgmt\", job=\"docker\"} | json | status =~ \"5..\" [$__range]))",
           "legendFormat": "",
           "queryType": "instant"
         }
@@ -133,7 +133,7 @@
       "datasource": { "type": "loki", "uid": "loki" },
       "targets": [
         {
-          "expr": "quantile_over_time(0.95, {app=\"caddy-mgmt\", job=\"docker\", method=~\".+\"} | json | unwrap duration [$__range])",
+          "expr": "quantile_over_time(0.95, {app=\"caddy-mgmt\", job=\"docker\"} | json | status != \"\" | unwrap duration [$__range])",
           "legendFormat": "",
           "queryType": "instant"
         }
@@ -180,19 +180,19 @@
       "datasource": { "type": "loki", "uid": "loki" },
       "targets": [
         {
-          "expr": "sum(rate({app=\"caddy-mgmt\", job=\"docker\", status=~\"2..\"} [1m]))",
+          "expr": "sum(rate({app=\"caddy-mgmt\", job=\"docker\"} | json | status =~ \"2..\" [1m]))",
           "legendFormat": "2xx"
         },
         {
-          "expr": "sum(rate({app=\"caddy-mgmt\", job=\"docker\", status=~\"3..\"} [1m]))",
+          "expr": "sum(rate({app=\"caddy-mgmt\", job=\"docker\"} | json | status =~ \"3..\" [1m]))",
           "legendFormat": "3xx"
         },
         {
-          "expr": "sum(rate({app=\"caddy-mgmt\", job=\"docker\", status=~\"4..\"} [1m]))",
+          "expr": "sum(rate({app=\"caddy-mgmt\", job=\"docker\"} | json | status =~ \"4..\" [1m]))",
           "legendFormat": "4xx"
         },
         {
-          "expr": "sum(rate({app=\"caddy-mgmt\", job=\"docker\", status=~\"5..\"} [1m]))",
+          "expr": "sum(rate({app=\"caddy-mgmt\", job=\"docker\"} | json | status =~ \"5..\" [1m]))",
           "legendFormat": "5xx"
         }
       ],
@@ -235,7 +235,7 @@
       "datasource": { "type": "loki", "uid": "loki" },
       "targets": [
         {
-          "expr": "sum(rate({app=\"caddy-mgmt\", job=\"docker\", method=~\".+\"} | json | unwrap size [1m]))",
+          "expr": "sum(rate({app=\"caddy-mgmt\", job=\"docker\"} | json | status != \"\" | unwrap size [1m]))",
           "legendFormat": "bytes out/s"
         }
       ],
@@ -271,15 +271,15 @@
       "datasource": { "type": "loki", "uid": "loki" },
       "targets": [
         {
-          "expr": "quantile_over_time(0.99, {app=\"caddy-mgmt\", job=\"docker\", method=~\".+\"} | json | unwrap duration [5m])",
+          "expr": "quantile_over_time(0.99, {app=\"caddy-mgmt\", job=\"docker\"} | json | status != \"\" | unwrap duration [5m])",
           "legendFormat": "p99"
         },
         {
-          "expr": "quantile_over_time(0.95, {app=\"caddy-mgmt\", job=\"docker\", method=~\".+\"} | json | unwrap duration [5m])",
+          "expr": "quantile_over_time(0.95, {app=\"caddy-mgmt\", job=\"docker\"} | json | status != \"\" | unwrap duration [5m])",
           "legendFormat": "p95"
         },
         {
-          "expr": "quantile_over_time(0.50, {app=\"caddy-mgmt\", job=\"docker\", method=~\".+\"} | json | unwrap duration [5m])",
+          "expr": "quantile_over_time(0.50, {app=\"caddy-mgmt\", job=\"docker\"} | json | status != \"\" | unwrap duration [5m])",
           "legendFormat": "p50"
         }
       ],
@@ -327,7 +327,7 @@
       "datasource": { "type": "loki", "uid": "loki" },
       "targets": [
         {
-          "expr": "topk(15, sum by (remote_ip) (count_over_time({app=\"caddy-mgmt\", job=\"docker\", method=~\".+\"} | json remote_ip=\"request.remote_ip\" [$__range])))",
+          "expr": "topk(15, sum by (remote_ip) (count_over_time({app=\"caddy-mgmt\", job=\"docker\"} | json remote_ip=\"request.remote_ip\" | json | status != \"\" [$__range])))",
           "legendFormat": "{{remote_ip}}",
           "queryType": "instant"
         }
@@ -351,7 +351,7 @@
       "datasource": { "type": "loki", "uid": "loki" },
       "targets": [
         {
-          "expr": "sum by (status) (count_over_time({app=\"caddy-mgmt\", job=\"docker\", status=~\".+\"} [$__range]))",
+          "expr": "sum by (status) (count_over_time({app=\"caddy-mgmt\", job=\"docker\"} | json | status != \"\" [$__range]))",
           "legendFormat": "{{status}}",
           "queryType": "instant"
         }
@@ -374,7 +374,7 @@
       "datasource": { "type": "loki", "uid": "loki" },
       "targets": [
         {
-          "expr": "sum by (method) (count_over_time({app=\"caddy-mgmt\", job=\"docker\", method=~\".+\"} [$__range]))",
+          "expr": "sum by (method) (count_over_time({app=\"caddy-mgmt\", job=\"docker\"} | json method=\"request.method\" | json | status != \"\" [$__range]))",
           "legendFormat": "{{method}}",
           "queryType": "instant"
         }
@@ -406,7 +406,7 @@
       "datasource": { "type": "loki", "uid": "loki" },
       "targets": [
         {
-          "expr": "{app=\"caddy-mgmt\", job=\"docker\", method=~\".+\"} | json",
+          "expr": "{app=\"caddy-mgmt\", job=\"docker\"} | json | status != \"\"",
           "legendFormat": ""
         }
       ],
@@ -439,7 +439,7 @@
       "datasource": { "type": "loki", "uid": "loki" },
       "targets": [
         {
-          "expr": "{app=\"caddy-mgmt\", job=\"docker\", status=~\"[45]..\"} | json",
+          "expr": "{app=\"caddy-mgmt\", job=\"docker\"} | json | status =~ \"[45]..\"",
           "legendFormat": ""
         }
       ],
