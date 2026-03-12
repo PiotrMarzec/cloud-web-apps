@@ -57,12 +57,10 @@ loki.process "add_labels" {
     max_lines     = 256
   }
 
-  // Parse JSON log lines from Docker apps / Caddy
+  // Extract nested fields needed for label promotion
   stage.json {
     expressions = {
       level  = "level",
-      msg    = "message",
-      // Caddy access log fields
       status = "status",
       method = "request.method",
       proto  = "request.proto",
@@ -70,7 +68,7 @@ loki.process "add_labels" {
     }
   }
 
-  // Promote parsed fields to labels
+  // Promote key fields to Loki labels for efficient stream filtering
   stage.labels {
     values = {
       level  = "",
@@ -79,6 +77,16 @@ loki.process "add_labels" {
       proto  = "",
       logger = "",
     }
+  }
+
+  // Extract all top-level JSON fields into the extracted map,
+  // then promote every one to structured metadata for the details panel
+  stage.json {
+    expressions = {}
+  }
+
+  stage.structured_metadata {
+    values = {}
   }
 
   // Add static labels common to this VM
