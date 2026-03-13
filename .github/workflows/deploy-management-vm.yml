@@ -23,12 +23,20 @@ jobs:
           MGMT_VM_SSH_KEY: ${{ secrets.MGMT_VM_SSH_KEY }}
           GRAFANA_ADMIN_PASSWORD: ${{ secrets.GRAFANA_ADMIN_PASSWORD }}
           OBSERVABILITY_DOMAIN: ${{ secrets.OBSERVABILITY_DOMAIN }}
+          LOKI_PUSH_USER: ${{ secrets.LOKI_PUSH_USER }}
+          LOKI_PUSH_PASSWORD_HASH: ${{ secrets.LOKI_PUSH_PASSWORD_HASH }}
+          PROM_PUSH_USER: ${{ secrets.PROM_PUSH_USER }}
+          PROM_PUSH_PASSWORD_HASH: ${{ secrets.PROM_PUSH_PASSWORD_HASH }}
         run: |
           missing=()
           [[ -z "$MGMT_VM_IP" ]] && missing+=("MGMT_VM_IP")
           [[ -z "$MGMT_VM_SSH_KEY" ]] && missing+=("MGMT_VM_SSH_KEY")
           [[ -z "$GRAFANA_ADMIN_PASSWORD" ]] && missing+=("GRAFANA_ADMIN_PASSWORD")
           [[ -z "$OBSERVABILITY_DOMAIN" ]] && missing+=("OBSERVABILITY_DOMAIN")
+          [[ -z "$LOKI_PUSH_USER" ]] && missing+=("LOKI_PUSH_USER")
+          [[ -z "$LOKI_PUSH_PASSWORD_HASH" ]] && missing+=("LOKI_PUSH_PASSWORD_HASH")
+          [[ -z "$PROM_PUSH_USER" ]] && missing+=("PROM_PUSH_USER")
+          [[ -z "$PROM_PUSH_PASSWORD_HASH" ]] && missing+=("PROM_PUSH_PASSWORD_HASH")
           if [[ ${#missing[@]} -gt 0 ]]; then
             echo "Missing required secrets: ${missing[*]}"
             exit 1
@@ -57,10 +65,18 @@ jobs:
             fi
 
             echo "Writing/updating .env from secrets..."
-            printf 'GRAFANA_ADMIN_PASSWORD=%s\nOBSERVABILITY_DOMAIN=%s\nVM_HOSTNAME=management-vm\nLOKI_PUSH_URL=http://loki:3100/loki/api/v1/push\nPROMETHEUS_REMOTE_WRITE_URL=http://prometheus:9090/api/v1/write\n' \
-              '${{ secrets.GRAFANA_ADMIN_PASSWORD }}' \
-              '${{ secrets.OBSERVABILITY_DOMAIN }}' \
-              > "${DEPLOY_DIR}/infrastructure/management-vm/.env"
+            cat > "${DEPLOY_DIR}/infrastructure/management-vm/.env" <<ENVEOF
+GRAFANA_ADMIN_PASSWORD=${{ secrets.GRAFANA_ADMIN_PASSWORD }}
+OBSERVABILITY_DOMAIN=${{ secrets.OBSERVABILITY_DOMAIN }}
+VM_HOSTNAME=management-vm
+LOKI_PUSH_URL=http://loki:3100/loki/api/v1/push
+PROMETHEUS_REMOTE_WRITE_URL=http://prometheus:9090/api/v1/write
+LOKI_PUSH_USER=${{ secrets.LOKI_PUSH_USER }}
+LOKI_PUSH_PASSWORD_HASH=${{ secrets.LOKI_PUSH_PASSWORD_HASH }}
+PROM_PUSH_USER=${{ secrets.PROM_PUSH_USER }}
+PROM_PUSH_PASSWORD_HASH=${{ secrets.PROM_PUSH_PASSWORD_HASH }}
+ENVEOF
+            chmod 600 "${DEPLOY_DIR}/infrastructure/management-vm/.env"
 
             echo "Generating Caddyfile with actual domain..."
             OBSERVABILITY_DOMAIN=${{ secrets.OBSERVABILITY_DOMAIN }} \
@@ -77,7 +93,7 @@ jobs:
             docker compose -f "${DEPLOY_DIR}/infrastructure/management-vm/docker-compose.yml" up -d
 
             echo "Reloading Prometheus config..."
-            curl -s -X POST http://localhost:9090/-/reload || true
+            docker exec prometheus wget -q --post-data= -O- http://localhost:9090/-/reload || true
 
             echo "Stack status:"
             docker compose -f "${DEPLOY_DIR}/infrastructure/management-vm/docker-compose.yml" ps

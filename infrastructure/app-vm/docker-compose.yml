@@ -87,7 +87,11 @@ services:
       - alloy_data:/var/lib/alloy/data
     environment:
       - LOKI_PUSH_URL=${LOKI_PUSH_URL}
+      - LOKI_PUSH_USER=${LOKI_PUSH_USER}
+      - LOKI_PUSH_PASSWORD=${LOKI_PUSH_PASSWORD}
       - PROMETHEUS_REMOTE_WRITE_URL=${PROMETHEUS_REMOTE_WRITE_URL}
+      - PROM_PUSH_USER=${PROM_PUSH_USER}
+      - PROM_PUSH_PASSWORD=${PROM_PUSH_PASSWORD}
       - VM_HOSTNAME=${VM_HOSTNAME}
     extra_hosts:
       - "node-exporter:host-gateway"

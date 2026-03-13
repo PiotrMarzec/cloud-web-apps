@@ -99,13 +99,15 @@ loki.process "add_labels" {
   }
 }
 
-// Push logs to Loki on management VM
+// Push logs to Loki on management VM (authenticated via basicauth on Caddy)
 loki.write "loki_push" {
   endpoint {
     url = env("LOKI_PUSH_URL")
 
-    // mTLS can be configured here when internal certs are available:
-    // tls_config { ... }
+    basic_auth {
+      username = env("LOKI_PUSH_USER")
+      password = env("LOKI_PUSH_PASSWORD")
+    }
   }
 }
 
@@ -143,12 +145,14 @@ prometheus.relabel "add_host" {
   }
 }
 
-// Remote write to Prometheus on management VM
+// Remote write to Prometheus on management VM (authenticated via basicauth on Caddy)
 prometheus.remote_write "prometheus_push" {
   endpoint {
     url = env("PROMETHEUS_REMOTE_WRITE_URL")
 
-    // mTLS can be configured here when internal certs are available:
-    // tls_config { ... }
+    basic_auth {
+      username = env("PROM_PUSH_USER")
+      password = env("PROM_PUSH_PASSWORD")
+    }
   }
 }

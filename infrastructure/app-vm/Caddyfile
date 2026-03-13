@@ -23,6 +23,15 @@ data-collection.piotrmarzec.info {
 		format json
 	}
 
+	header {
+		Strict-Transport-Security "max-age=63072000; includeSubDomains; preload"
+		X-Content-Type-Options "nosniff"
+		X-Frame-Options "DENY"
+		Referrer-Policy "strict-origin-when-cross-origin"
+		Permissions-Policy "camera=(), microphone=(), geolocation=()"
+		-Server
+	}
+
 	reverse_proxy dc-app:9666
 
 	handle_errors 502 503 504 {
@@ -36,6 +45,15 @@ regie.kapibara.cloud {
 	log {
 		output stdout
 		format json
+	}
+
+	header {
+		Strict-Transport-Security "max-age=63072000; includeSubDomains; preload"
+		X-Content-Type-Options "nosniff"
+		X-Frame-Options "DENY"
+		Referrer-Policy "strict-origin-when-cross-origin"
+		Permissions-Policy "camera=(), microphone=(), geolocation=()"
+		-Server
 	}
 
 	reverse_proxy regie:3000

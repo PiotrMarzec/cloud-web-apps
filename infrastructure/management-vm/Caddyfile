@@ -16,5 +16,51 @@ ${OBSERVABILITY_DOMAIN} {
 		format json
 	}
 
+	header {
+		Strict-Transport-Security "max-age=63072000; includeSubDomains; preload"
+		X-Content-Type-Options "nosniff"
+		X-Frame-Options "SAMEORIGIN"
+		Referrer-Policy "strict-origin-when-cross-origin"
+		Permissions-Policy "camera=(), microphone=(), geolocation=()"
+		-Server
+	}
+
 	reverse_proxy grafana:3000
+}
+
+# ---------------------------------------------------------------------------
+# Loki push endpoint — authenticated reverse proxy for app VM Alloy collectors.
+# Listens on port 3100 externally, forwards to loki:3100 internally.
+# Credentials: LOKI_PUSH_USER / LOKI_PUSH_PASSWORD_HASH (bcrypt) via env.
+# ---------------------------------------------------------------------------
+:3100 {
+	log {
+		output stdout
+		format json
+	}
+
+	basicauth {
+		{$LOKI_PUSH_USER} {$LOKI_PUSH_PASSWORD_HASH}
+	}
+
+	reverse_proxy loki:3100
+}
+
+# ---------------------------------------------------------------------------
+# Prometheus remote-write endpoint — authenticated reverse proxy for app VM
+# Alloy collectors. Listens on port 9090 externally, forwards to
+# prometheus:9090 internally.
+# Credentials: PROM_PUSH_USER / PROM_PUSH_PASSWORD_HASH (bcrypt) via env.
+# ---------------------------------------------------------------------------
+:9090 {
+	log {
+		output stdout
+		format json
+	}
+
+	basicauth {
+		{$PROM_PUSH_USER} {$PROM_PUSH_PASSWORD_HASH}
+	}
+
+	reverse_proxy prometheus:9090
 }

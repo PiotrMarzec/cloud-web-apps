@@ -23,12 +23,20 @@ jobs:
           APP_VM_1_SSH_KEY: ${{ secrets.APP_VM_1_SSH_KEY }}
           LOKI_PUSH_URL: ${{ secrets.LOKI_PUSH_URL }}
           PROMETHEUS_REMOTE_WRITE_URL: ${{ secrets.PROMETHEUS_REMOTE_WRITE_URL }}
+          LOKI_PUSH_USER: ${{ secrets.LOKI_PUSH_USER }}
+          LOKI_PUSH_PASSWORD: ${{ secrets.LOKI_PUSH_PASSWORD }}
+          PROM_PUSH_USER: ${{ secrets.PROM_PUSH_USER }}
+          PROM_PUSH_PASSWORD: ${{ secrets.PROM_PUSH_PASSWORD }}
         run: |
           missing=()
           [[ -z "$APP_VM_1_IP" ]] && missing+=("APP_VM_1_IP")
           [[ -z "$APP_VM_1_SSH_KEY" ]] && missing+=("APP_VM_1_SSH_KEY")
           [[ -z "$LOKI_PUSH_URL" ]] && missing+=("LOKI_PUSH_URL")
           [[ -z "$PROMETHEUS_REMOTE_WRITE_URL" ]] && missing+=("PROMETHEUS_REMOTE_WRITE_URL")
+          [[ -z "$LOKI_PUSH_USER" ]] && missing+=("LOKI_PUSH_USER")
+          [[ -z "$LOKI_PUSH_PASSWORD" ]] && missing+=("LOKI_PUSH_PASSWORD")
+          [[ -z "$PROM_PUSH_USER" ]] && missing+=("PROM_PUSH_USER")
+          [[ -z "$PROM_PUSH_PASSWORD" ]] && missing+=("PROM_PUSH_PASSWORD")
           if [[ ${#missing[@]} -gt 0 ]]; then
             echo "Missing required secrets: ${missing[*]}"
             exit 1
@@ -52,10 +60,16 @@ jobs:
             fi
 
             echo "Writing/updating .env from secrets..."
-            printf 'LOKI_PUSH_URL=%s\nPROMETHEUS_REMOTE_WRITE_URL=%s\nVM_HOSTNAME=apps-vm\n' \
-              '${{ secrets.LOKI_PUSH_URL }}' \
-              '${{ secrets.PROMETHEUS_REMOTE_WRITE_URL }}' \
-              > "${DEPLOY_DIR}/infrastructure/app-vm/.env"
+            cat > "${DEPLOY_DIR}/infrastructure/app-vm/.env" <<ENVEOF
+LOKI_PUSH_URL=${{ secrets.LOKI_PUSH_URL }}
+LOKI_PUSH_USER=${{ secrets.LOKI_PUSH_USER }}
+LOKI_PUSH_PASSWORD=${{ secrets.LOKI_PUSH_PASSWORD }}
+PROMETHEUS_REMOTE_WRITE_URL=${{ secrets.PROMETHEUS_REMOTE_WRITE_URL }}
+PROM_PUSH_USER=${{ secrets.PROM_PUSH_USER }}
+PROM_PUSH_PASSWORD=${{ secrets.PROM_PUSH_PASSWORD }}
+VM_HOSTNAME=apps-vm
+ENVEOF
+            chmod 600 "${DEPLOY_DIR}/infrastructure/app-vm/.env"
 
             echo "Pulling updated images..."
             docker compose -f "${DEPLOY_DIR}/infrastructure/app-vm/docker-compose.yml" pull
