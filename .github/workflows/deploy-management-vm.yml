@@ -44,10 +44,19 @@ jobs:
 
       - name: Deploy to management VM via SSH
         uses: appleboy/ssh-action@v1
+        env:
+          GRAFANA_ADMIN_PASSWORD: ${{ secrets.GRAFANA_ADMIN_PASSWORD }}
+          OBSERVABILITY_DOMAIN: ${{ secrets.OBSERVABILITY_DOMAIN }}
+          LOKI_PUSH_USER: ${{ secrets.LOKI_PUSH_USER }}
+          LOKI_PUSH_PASSWORD_HASH: ${{ secrets.LOKI_PUSH_PASSWORD_HASH }}
+          PROM_PUSH_USER: ${{ secrets.PROM_PUSH_USER }}
+          PROM_PUSH_PASSWORD_HASH: ${{ secrets.PROM_PUSH_PASSWORD_HASH }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
         with:
           host: ${{ secrets.MGMT_VM_IP }}
           username: deploy
           key: ${{ secrets.MGMT_VM_SSH_KEY }}
+          envs: GRAFANA_ADMIN_PASSWORD,OBSERVABILITY_DOMAIN,LOKI_PUSH_USER,LOKI_PUSH_PASSWORD_HASH,PROM_PUSH_USER,PROM_PUSH_PASSWORD_HASH,GITHUB_REPOSITORY
           script: |
             set -euo pipefail
             DEPLOY_DIR=/opt/cloud-web-apps
@@ -61,26 +70,26 @@ jobs:
               git -C "${DEPLOY_DIR}" checkout -- .
               git -C "${DEPLOY_DIR}" pull --ff-only
             else
-              git clone https://github.com/${{ github.repository }}.git "${DEPLOY_DIR}"
+              git clone "https://github.com/${GITHUB_REPOSITORY}.git" "${DEPLOY_DIR}"
             fi
 
             echo "Writing/updating .env from secrets..."
-            cat > "${DEPLOY_DIR}/infrastructure/management-vm/.env" <<ENVEOF
-GRAFANA_ADMIN_PASSWORD=${{ secrets.GRAFANA_ADMIN_PASSWORD }}
-OBSERVABILITY_DOMAIN=${{ secrets.OBSERVABILITY_DOMAIN }}
-VM_HOSTNAME=management-vm
-LOKI_PUSH_URL=http://loki:3100/loki/api/v1/push
-PROMETHEUS_REMOTE_WRITE_URL=http://prometheus:9090/api/v1/write
-LOKI_PUSH_USER=${{ secrets.LOKI_PUSH_USER }}
-LOKI_PUSH_PASSWORD_HASH=${{ secrets.LOKI_PUSH_PASSWORD_HASH }}
-PROM_PUSH_USER=${{ secrets.PROM_PUSH_USER }}
-PROM_PUSH_PASSWORD_HASH=${{ secrets.PROM_PUSH_PASSWORD_HASH }}
-ENVEOF
+            printf '%s\n' \
+              "GRAFANA_ADMIN_PASSWORD=${GRAFANA_ADMIN_PASSWORD}" \
+              "OBSERVABILITY_DOMAIN=${OBSERVABILITY_DOMAIN}" \
+              "VM_HOSTNAME=management-vm" \
+              "LOKI_PUSH_URL=http://loki:3100/loki/api/v1/push" \
+              "PROMETHEUS_REMOTE_WRITE_URL=http://prometheus:9090/api/v1/write" \
+              "LOKI_PUSH_USER=${LOKI_PUSH_USER}" \
+              "LOKI_PUSH_PASSWORD_HASH=${LOKI_PUSH_PASSWORD_HASH}" \
+              "PROM_PUSH_USER=${PROM_PUSH_USER}" \
+              "PROM_PUSH_PASSWORD_HASH=${PROM_PUSH_PASSWORD_HASH}" \
+              > "${DEPLOY_DIR}/infrastructure/management-vm/.env"
             chmod 600 "${DEPLOY_DIR}/infrastructure/management-vm/.env"
 
             echo "Generating Caddyfile with actual domain..."
-            OBSERVABILITY_DOMAIN=${{ secrets.OBSERVABILITY_DOMAIN }} \
-              envsubst '${OBSERVABILITY_DOMAIN}' \
+            export OBSERVABILITY_DOMAIN
+            envsubst '${OBSERVABILITY_DOMAIN}' \
               < "${DEPLOY_DIR}/infrastructure/management-vm/Caddyfile" \
               > "${DEPLOY_DIR}/infrastructure/management-vm/Caddyfile.rendered"
             cp "${DEPLOY_DIR}/infrastructure/management-vm/Caddyfile.rendered" \
